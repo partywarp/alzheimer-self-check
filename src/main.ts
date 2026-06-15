@@ -1,5 +1,8 @@
 import './style.css'
 
+const publicAssetUrl = (path: string) =>
+  `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}${path.replace(/^\/+/, '')}`
+
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <main class="min-h-screen bg-[#f4f3ee] font-sans text-[#172b2c] antialiased">
     <nav class="border-b border-[#d9ddd6] bg-[#f4f3ee]/95">
@@ -68,9 +71,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             <span class="text-xs font-medium text-[#72807e]">Take your time</span>
           </div>
           <img
-            src="/kitchen-picture-description.png"
+            src="${publicAssetUrl('kitchen-picture-description.png')}"
             alt="A detailed black-and-white illustration of a busy family kitchen for a picture description exercise"
-            class="aspect-[3/2] w-full bg-[#f8f7f2] object-contain"
+            class="aspect-3/2 w-full bg-[#f8f7f2] object-contain"
           />
           <div class="flex items-start gap-3 border-t border-[#d5d7cf] bg-[#fbfaf6] px-5 py-4 text-sm leading-6 text-[#536563]">
             <svg class="mt-0.5 size-5 shrink-0 text-[#497a72]" viewBox="0 0 24 24" fill="none" aria-hidden="true">

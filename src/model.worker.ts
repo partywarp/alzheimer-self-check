@@ -1,5 +1,8 @@
 import { env, pipeline } from '@huggingface/transformers'
 
+const publicAssetUrl = (path: string) =>
+  `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}${path.replace(/^\/+/, '')}`
+
 type WorkerRequest = {
   type: 'analyze'
   audio: Float32Array
@@ -10,7 +13,7 @@ type Classification = {
   score: number
 }
 
-env.localModelPath = '/models/'
+env.localModelPath = publicAssetUrl('models/')
 env.allowLocalModels = true
 env.allowRemoteModels = false
 const wasmBackend = env.backends.onnx.wasm
@@ -20,8 +23,8 @@ if (!wasmBackend) {
 }
 
 wasmBackend.wasmPaths = {
-  wasm: '/runtime/ort-wasm-simd-threaded.wasm',
-  mjs: '/runtime/ort-wasm-simd-threaded.mjs',
+  wasm: publicAssetUrl('runtime/ort-wasm-simd-threaded.wasm'),
+  mjs: publicAssetUrl('runtime/ort-wasm-simd-threaded.mjs'),
 }
 wasmBackend.numThreads = 1
 wasmBackend.proxy = false
