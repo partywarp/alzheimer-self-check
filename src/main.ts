@@ -1,7 +1,7 @@
 import './style.css'
 
 const publicAssetUrl = (path: string) =>
-  `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}${path.replace(/^\/+/, '')}`
+  `${import.meta.env.BASE_URL}${path}`
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <main class="min-h-screen bg-[#f4f3ee] font-sans text-[#172b2c] antialiased">
@@ -71,7 +71,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             <span class="text-xs font-medium text-[#72807e]">Take your time</span>
           </div>
           <img
-            src="${publicAssetUrl('kitchen-picture-description.png')}"
+            src="${publicAssetUrl('scenes/kitchen-picture-description.png')}"
             alt="A detailed black-and-white illustration of a busy family kitchen for a picture description exercise"
             class="aspect-3/2 w-full bg-[#f8f7f2] object-contain"
           />
@@ -94,7 +94,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             <p class="mt-2 text-sm leading-6 text-[#687775]">Your recording remains in this browser unless you download it.</p>
           </div>
 
-          <div class="min-h-[370px] px-6 py-7 sm:px-7">
+          <div class="min-h-92.5 px-6 py-7 sm:px-7">
             <div id="idle-panel" class="flex flex-col items-center text-center">
               <button id="start-recording" type="button" class="group grid size-24 place-items-center rounded-full bg-[#dbece7] text-[#1f645e] ring-8 ring-[#eff6f3] transition hover:scale-[1.03] hover:bg-[#cee5de] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#2b746d] active:scale-95" aria-label="Start recording">
                 <span class="grid size-14 place-items-center rounded-full bg-[#216869] text-white shadow-lg shadow-[#216869]/20 transition group-hover:bg-[#195d58]">

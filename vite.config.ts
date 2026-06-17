@@ -3,5 +3,5 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [tailwindcss()],
-  base: '/alzheimer-self-check'
+  base: '/alzheimer-self-check/'
 })

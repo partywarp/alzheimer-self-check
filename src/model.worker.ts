@@ -1,7 +1,7 @@
 import { env, pipeline } from '@huggingface/transformers'
 
 const publicAssetUrl = (path: string) =>
-  `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}${path.replace(/^\/+/, '')}`
+  `${import.meta.env.BASE_URL}${path}`
 
 type WorkerRequest = {
   type: 'analyze'
