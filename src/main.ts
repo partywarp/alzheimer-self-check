@@ -1,144 +1,219 @@
 import './style.css'
 
-const publicAssetUrl = (path: string) =>
-  `${import.meta.env.BASE_URL}${path}`
+type RecorderState = 'idle' | 'requesting' | 'calibrating' | 'recording' | 'completed' | 'error' | 'unsupported'
+type AnalysisPanel = 'ready' | 'loading' | 'result' | 'error'
+type ResultBand = 'control-like' | 'mixed' | 'ad-like'
+
+interface PictureScene {
+  id: string
+  title: string
+  src: string
+  alt: string
+}
+
+interface PictureDeckState {
+  currentId: string
+  remainingIds: string[]
+}
+
+interface AnalysisResult {
+  adScore: number
+  controlScore: number
+  band: ResultBand
+}
+
+interface ResearchSubmissionV1 {
+  schemaVersion: '1.0'
+  consentVersion: '2026-06-15'
+  imageId: string
+  model: {
+    id: 'giyong/wav2vec2-base_ADReSSo'
+    revision: '24e5428d688f83a0f7a2469871c998329f5ef2df'
+  }
+  scores: {
+    control: number
+    ad: number
+  }
+  resultBand: ResultBand
+  recordingDurationMs: number
+  browserFamily: string
+  submittedAt: string
+}
+
+type ModelWorkerMessage =
+  | { type: 'progress'; progress: number }
+  | { type: 'status'; status: 'loading' | 'analyzing' }
+  | { type: 'result'; adScore: number; controlScore: number }
+  | { type: 'error'; message: string }
+
+const appBaseUrl = () =>
+  import.meta.env.DEV
+    ? `${window.location.origin}/`
+    : new URL(import.meta.env.BASE_URL, window.location.origin).href
+
+const publicAssetUrl = (path = '') => new URL(path, appBaseUrl()).href
+
+const scenes: PictureScene[] = [
+  {
+    id: 'kitchen',
+    title: 'Busy kitchen',
+    src: publicAssetUrl('scenes/busy-kitchen.png'),
+    alt: 'A detailed black-and-white kitchen scene with water overflowing from a sink, a child reaching into a cupboard, another child holding a towel, and a dog watching.',
+  },
+  {
+    id: 'park-picnic',
+    title: 'Park picnic',
+    src: publicAssetUrl('scenes/park-picnic.png'),
+    alt: 'A detailed black-and-white park scene with a family picnic, a spilled drink, children playing, a cyclist, ducks by a pond, and a playground.',
+  },
+  {
+    id: 'moving-day',
+    title: 'Moving day',
+    src: publicAssetUrl('scenes/moving-day.png'),
+    alt: 'A detailed black-and-white living room scene with a family unpacking boxes, hanging pictures, stacking blocks, carrying items, and cleaning up a fallen plant.',
+  },
+  {
+    id: 'grocery-market',
+    title: 'Grocery market',
+    src: publicAssetUrl('scenes/grocery-market.png'),
+    alt: 'A detailed black-and-white grocery market scene with shoppers, a cashier, produce displays, a fallen shopping bag, and a child pointing at fruit on the floor.',
+  },
+  {
+    id: 'community-garden',
+    title: 'Community garden',
+    src: publicAssetUrl('scenes/community-garden.png'),
+    alt: 'A detailed black-and-white community garden scene with adults and children planting, watering, moving a wheelbarrow, working near a shed, and tending raised beds.',
+  },
+]
+
+const sceneIds = scenes.map(({ id }) => id)
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <main class="min-h-screen bg-[#f4f3ee] font-sans text-[#172b2c] antialiased">
-    <nav class="border-b border-[#d9ddd6] bg-[#f4f3ee]/95">
-      <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
-        <a href="/" class="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#216869]">
-          <span class="grid size-10 place-items-center rounded-full bg-[#193c3d] text-white shadow-sm">
-            <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 13h2.2l1.3-5 2.4 10 2.3-13 2.2 11 1.4-6 1.2 3H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-          <span>
-            <span class="block text-sm font-bold tracking-[0.16em] text-[#193c3d] uppercase">Mindful Check</span>
-            <span class="block text-xs text-[#607170]">Picture description exercise</span>
-          </span>
+  <a class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#203836] focus:outline-2 focus:outline-offset-2 focus:outline-[#315f5a]" href="#main-content">
+    Skip to main content
+  </a>
+
+  <main id="main-content" tabindex="-1" class="min-h-screen bg-[#fafaf8] font-sans text-[#202827] antialiased focus:outline-none">
+    <nav class="border-b border-[#d9ddda] bg-white">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10">
+        <a href="${publicAssetUrl()}" class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
+          <span class="block text-sm font-semibold text-[#253f3d]">Alzheimer's screening helper</span>
+          <span class="block text-xs text-[#697572]">Runs in your browser</span>
         </a>
-        <div class="flex items-center gap-2 rounded-full border border-[#cdd7d2] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#315c58]">
-          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 3 5 6v5c0 4.4 2.8 8.5 7 10 4.2-1.5 7-5.6 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.8"/>
-            <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Private & on-device
+        <div class="flex items-center gap-2">
+          <a href="${publicAssetUrl('science.html')}" class="px-2 py-2 text-xs font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a]">Method & limitations</a>
+          <a href="${publicAssetUrl('about.html')}" class="px-2 py-2 text-xs font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a]">About me</a>
+          <button id="share-app-nav" type="button" class="px-2 py-2 text-xs font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a]">Share</button>
         </div>
       </div>
     </nav>
 
-    <div class="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12 lg:px-10 lg:py-14">
-      <header class="mb-8 max-w-3xl sm:mb-10">
-        <div class="mb-4 flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-[#44736c] uppercase">
-          <span class="h-px w-7 bg-[#76a99f]"></span>
-          Alzheimer’s self-check
-        </div>
-        <h1 class="max-w-2xl font-serif text-4xl leading-[1.08] font-semibold tracking-[-0.03em] text-[#183738] sm:text-5xl lg:text-6xl">
-          Describe what you see.
+    <div class="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+      <header class="mb-7 max-w-3xl">
+        <h1 class="max-w-2xl text-3xl leading-tight font-semibold tracking-[-0.02em] text-[#203836] sm:text-4xl">
+          A private Alzheimer's screening helper for families.
         </h1>
-        <p class="mt-4 max-w-2xl text-base leading-7 text-[#596a68] sm:text-lg">
-          Look closely at the picture, then record yourself describing everything happening in the scene. Speak naturally and take as much time as you need.
+        <p class="mt-3 max-w-2xl text-base leading-7 text-[#596663]">
+          For adults concerned about an older parent or family member's memory, language, or speech. Record a picture description, listen back, and optionally run an experimental speech risk-class comparison. Not diagnostic.
         </p>
       </header>
 
-      <div class="mb-7 grid gap-3 sm:grid-cols-3">
-        <div class="flex items-center gap-3 rounded-2xl border border-[#d8ddd7] bg-white/55 px-4 py-3">
-          <span class="grid size-7 shrink-0 place-items-center rounded-full bg-[#193c3d] text-xs font-bold text-white">1</span>
-          <span class="text-sm font-semibold text-[#284746]">Study the picture</span>
-        </div>
-        <div class="flex items-center gap-3 rounded-2xl border border-[#d8ddd7] bg-white/55 px-4 py-3">
-          <span class="grid size-7 shrink-0 place-items-center rounded-full bg-[#dceae5] text-xs font-bold text-[#285b57]">2</span>
-          <span class="text-sm font-semibold text-[#284746]">Record your description</span>
-        </div>
-        <div class="flex items-center gap-3 rounded-2xl border border-[#d8ddd7] bg-white/55 px-4 py-3">
-          <span class="grid size-7 shrink-0 place-items-center rounded-full bg-[#dceae5] text-xs font-bold text-[#285b57]">3</span>
-          <span class="text-sm font-semibold text-[#284746]">Review your recording</span>
+      <section class="mb-7 border-y border-[#d9ddda] py-4" aria-labelledby="before-you-begin">
+        <h2 id="before-you-begin" class="text-sm font-semibold text-[#293f3d]">Before you begin</h2>
+        <dl class="mt-3 grid gap-x-8 gap-y-3 text-sm leading-6 text-[#596663] sm:grid-cols-2 lg:grid-cols-4">
+          <div><dt class="font-medium text-[#293f3d]">Purpose</dt><dd>Memory-screening conversation aid.</dd></div>
+          <div><dt class="font-medium text-[#293f3d]">Recording</dt><dd>Stays on this device.</dd></div>
+          <div><dt class="font-medium text-[#293f3d]">Output</dt><dd>Experimental class comparison, not clinical risk.</dd></div>
+          <div><dt class="font-medium text-[#293f3d]">Medical use</dt><dd>Not a diagnosis or substitute for a clinician.</dd></div>
+        </dl>
+      </section>
+
+      <div class="mb-7" aria-label="Exercise progress">
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div class="step-card flex items-center gap-3 rounded-lg border px-4 py-3 transition-all duration-500 motion-reduce:transition-none" data-step="1">
+            <span class="step-badge grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-all duration-500 motion-reduce:transition-none">1</span>
+            <span class="text-sm font-semibold">Study the picture</span>
+          </div>
+          <div class="step-card flex items-center gap-3 rounded-lg border px-4 py-3 transition-all duration-500 motion-reduce:transition-none" data-step="2">
+            <span class="step-badge grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-all duration-500 motion-reduce:transition-none">2</span>
+            <span class="text-sm font-semibold">Record your description</span>
+          </div>
+          <div class="step-card flex items-center gap-3 rounded-lg border px-4 py-3 transition-all duration-500 motion-reduce:transition-none" data-step="3">
+            <span class="step-badge grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-all duration-500 motion-reduce:transition-none">3</span>
+            <span class="text-sm font-semibold">Review your recording</span>
+          </div>
         </div>
       </div>
 
-      <section class="grid items-start gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.75fr)] lg:gap-8">
-        <div class="overflow-hidden rounded-[1.75rem] border border-[#cfd5cf] bg-[#eae8df] shadow-[0_20px_60px_-28px_rgba(28,57,55,0.35)]">
-          <div class="flex items-center justify-between border-b border-[#d5d7cf] bg-[#fbfaf6] px-5 py-3.5">
-            <div class="flex items-center gap-2">
-              <svg class="size-4 text-[#426b67]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-                <path d="m4 16 5-5 4 4 2-2 5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="16.5" cy="9.5" r="1.5" fill="currentColor"/>
-              </svg>
-              <span class="text-xs font-bold tracking-[0.16em] text-[#42615f] uppercase">Picture 01</span>
+      <section id="workspace" class="grid items-start gap-6 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.75fr)] lg:gap-8">
+        <div id="scene-panel" class="min-w-0 max-h-300 translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none">
+          <div class="overflow-hidden rounded-lg border border-[#cfd5cf] bg-white">
+            <div class="flex items-center justify-between gap-4 border-b border-[#d5d7cf] bg-white px-4 py-3">
+              <div class="flex items-center gap-2">
+                <svg class="size-4 text-[#426b67]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="m4 16 5-5 4 4 2-2 5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="16.5" cy="9.5" r="1.5" fill="currentColor"/>
+                </svg>
+                <span id="scene-title" class="text-sm font-medium text-[#42615f]">Busy kitchen</span>
+              </div>
+              <span class="text-xs text-[#72807e]">Scene rotates between attempts</span>
             </div>
-            <span class="text-xs font-medium text-[#72807e]">Take your time</span>
-          </div>
-          <img
-            src="${publicAssetUrl('scenes/kitchen-picture-description.png')}"
-            alt="A detailed black-and-white illustration of a busy family kitchen for a picture description exercise"
-            class="aspect-3/2 w-full bg-[#f8f7f2] object-contain"
-          />
-          <div class="flex items-start gap-3 border-t border-[#d5d7cf] bg-[#fbfaf6] px-5 py-4 text-sm leading-6 text-[#536563]">
-            <svg class="mt-0.5 size-5 shrink-0 text-[#497a72]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Focus on people, objects, actions, and anything unusual. There are no right or wrong answers.
+            <img id="scene-image" src="" alt="" width="1536" height="1024" class="aspect-3/2 w-full bg-[#f8f7f2] object-contain" />
+            <div class="flex items-start gap-3 border-t border-[#d5d7cf] bg-white px-4 py-3 text-sm leading-6 text-[#536563]">
+              <svg class="mt-0.5 size-5 shrink-0 text-[#497a72]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              This picture stays fixed for the current attempt. A different picture appears when you start another exercise.
+            </div>
           </div>
         </div>
 
-        <aside class="overflow-hidden rounded-[1.75rem] border border-[#cfd8d2] bg-white shadow-[0_20px_60px_-28px_rgba(28,57,55,0.28)]">
+        <aside id="exercise-panel" class="min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-lg border border-[#cfd8d2] bg-white transition-[width,max-width] duration-500 motion-reduce:transition-none">
           <div class="border-b border-[#e0e5e1] px-6 py-5 sm:px-7">
-            <div class="mb-2 flex items-center gap-2 text-xs font-bold tracking-[0.15em] text-[#4c766f] uppercase">
+            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-[#4c766f]">
               <span class="size-1.5 rounded-full bg-[#4e8e82]"></span>
-              Step 2 of 3
+              <span id="panel-step">Step 1 of 3</span>
             </div>
-            <h2 class="font-serif text-2xl font-semibold tracking-[-0.02em] text-[#183738]">Record your response</h2>
-            <p class="mt-2 text-sm leading-6 text-[#687775]">Your recording remains in this browser unless you download it.</p>
+            <h2 id="panel-title" class="text-xl font-semibold text-[#183738]">Study the picture</h2>
+            <p id="panel-description" class="mt-2 text-sm leading-6 text-[#687775]">Take a moment to notice the whole scene before recording.</p>
           </div>
 
           <div class="min-h-92.5 px-6 py-7 sm:px-7">
             <div id="idle-panel" class="flex flex-col items-center text-center">
-              <button id="start-recording" type="button" class="group grid size-24 place-items-center rounded-full bg-[#dbece7] text-[#1f645e] ring-8 ring-[#eff6f3] transition hover:scale-[1.03] hover:bg-[#cee5de] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#2b746d] active:scale-95" aria-label="Start recording">
-                <span class="grid size-14 place-items-center rounded-full bg-[#216869] text-white shadow-lg shadow-[#216869]/20 transition group-hover:bg-[#195d58]">
+              <button id="start-calibration" type="button" class="group grid size-20 place-items-center rounded-full border border-[#9dbab3] bg-[#eef5f2] text-[#1f645e] transition hover:bg-[#e1eeea] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#2b746d] active:scale-95" aria-label="Continue to microphone setup">
+                <span class="grid size-12 place-items-center rounded-full bg-[#315f5a] text-white transition group-hover:bg-[#264f4b]">
                   <svg class="size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/>
                     <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </span>
               </button>
-              <p class="mt-6 text-lg font-bold text-[#244443]">Ready when you are</p>
-              <p class="mt-2 max-w-xs text-sm leading-6 text-[#6b7977]">Select the microphone to begin. Your browser will ask for microphone access.</p>
-              <div class="mt-6 flex items-center gap-2 rounded-full bg-[#f0f4f1] px-3 py-2 text-xs font-semibold text-[#647571]">
-                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6V10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                </svg>
-                Nothing is uploaded
-              </div>
+              <p class="mt-6 text-lg font-bold text-[#244443]">Ready to describe it?</p>
+              <p class="mt-2 max-w-xs text-sm leading-6 text-[#6b7977]">Continue to a quick microphone warm-up. Recording will not begin yet.</p>
             </div>
 
             <div id="requesting-panel" class="hidden flex-col items-center py-8 text-center">
               <div class="grid size-20 animate-pulse place-items-center rounded-full bg-[#e4efeb] text-[#286a63]">
-                <svg class="size-8" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/>
-                  <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
+                <svg class="size-8" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </div>
               <p class="mt-6 text-lg font-bold text-[#244443]">Allow microphone access</p>
-              <p class="mt-2 max-w-xs text-sm leading-6 text-[#6b7977]">Check your browser’s permission prompt to continue.</p>
+              <p class="mt-2 max-w-xs text-sm leading-6 text-[#6b7977]">Check your browser's permission prompt to continue.</p>
+              <div id="permission-help" class="mt-5 hidden max-w-xs border-y border-[#d8e1dc] py-3 text-xs leading-5 text-[#667572]">
+                <p class="font-semibold text-[#405a56]">Still waiting for the browser.</p>
+                <p class="mt-1">If no prompt is visible, check the address bar microphone icon or site settings, then try again.</p>
+              </div>
+              <button id="cancel-permission" type="button" class="mt-5 rounded-lg px-4 py-2 text-xs font-bold text-[#657572] hover:bg-[#f0f4f1]">Cancel and try again</button>
             </div>
 
-            <div id="recording-panel" class="hidden flex-col items-center text-center">
-              <div class="flex items-center gap-2 rounded-full bg-[#fff0ed] px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-[#a53b2f] uppercase">
-                <span class="size-2 animate-pulse rounded-full bg-[#c6493b]"></span>
-                Recording
-              </div>
-              <div id="recording-timer" class="mt-5 font-mono text-5xl font-semibold tracking-[-0.04em] text-[#183738]" aria-label="Recording duration">00:00</div>
-              <div class="mt-3 flex items-center gap-2 rounded-full bg-[#edf5f2] px-3 py-1.5 text-xs font-bold text-[#3f716a]">
-                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-                  <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Recommended: 30–60 seconds
-              </div>
-              <div class="mt-7 flex h-10 items-center gap-1.5 text-[#4d8c82]" aria-hidden="true">
+            <div id="calibrating-panel" class="hidden flex-col items-center text-center">
+              <span class="grid size-16 place-items-center rounded-full bg-[#e4efeb] text-[#286a63]">
+                <svg class="size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </span>
+              <p class="mt-5 text-xs font-medium text-[#4c766f]">Quick warm-up</p>
+              <p class="mt-2 text-3xl font-semibold text-[#183738]">Say "Hello."</p>
+              <div class="mt-6 flex h-9 items-center gap-1.5 text-[#4d8c82]" aria-hidden="true">
                 <span class="h-3 w-1.5 animate-pulse rounded-full bg-current"></span>
                 <span class="h-7 w-1.5 animate-pulse rounded-full bg-current"></span>
                 <span class="h-5 w-1.5 animate-pulse rounded-full bg-current"></span>
@@ -148,156 +223,135 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                 <span class="h-8 w-1.5 animate-pulse rounded-full bg-current"></span>
                 <span class="h-3 w-1.5 animate-pulse rounded-full bg-current"></span>
               </div>
-              <p id="recording-guidance" class="mt-5 text-sm leading-6 text-[#6b7977]" aria-live="polite">Keep describing the picture. Aim for at least 30 seconds.</p>
-              <button id="stop-recording" type="button" class="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#a43e33] px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#8f332a] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#a43e33] disabled:cursor-wait disabled:opacity-60">
-                <span class="size-3 rounded-sm bg-white" aria-hidden="true"></span>
-                Stop recording
+              <p class="mt-5 max-w-xs text-sm leading-6 text-[#6b7977]">This gets you into the flow. The warm-up is not recorded or analyzed.</p>
+              <button id="begin-recording" type="button" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#216869] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#195d58] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#216869]">Start description</button>
+              <button id="cancel-calibration" type="button" class="mt-2 rounded-lg px-4 py-2 text-xs font-bold text-[#657572] hover:bg-[#f0f4f1]">Cancel</button>
+            </div>
+
+            <div id="recording-panel" class="hidden flex-col items-center text-center">
+              <div class="flex items-center gap-2 text-xs font-semibold text-[#a53b2f]">
+                <span class="size-2 animate-pulse rounded-full bg-[#c6493b]"></span>Recording
+              </div>
+              <div id="recording-timer" class="mt-5 font-mono text-5xl font-semibold tracking-[-0.04em] text-[#183738]" aria-label="Recording duration">00:00</div>
+              <div class="mt-3 flex items-center gap-2 rounded-full bg-[#edf5f2] px-3 py-1.5 text-xs font-bold text-[#3f716a]">
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                Recommended: 30-60 seconds
+              </div>
+              <p class="mt-6 text-sm font-bold text-[#284746]">Describe everything happening in the picture.</p>
+              <p id="recording-guidance" class="mt-2 text-sm leading-6 text-[#6b7977]" aria-live="polite">Start with the main action, then add details.</p>
+              <button id="stop-recording" type="button" class="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#a43e33] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#8f332a] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#a43e33] disabled:cursor-wait disabled:opacity-60">
+                <span class="size-3 rounded-sm bg-white" aria-hidden="true"></span>Stop recording
               </button>
             </div>
 
             <div id="completed-panel" class="hidden flex-col">
               <div class="flex items-center gap-3">
                 <span class="grid size-11 shrink-0 place-items-center rounded-full bg-[#dff0e9] text-[#267064]">
-                  <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                  <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
                 </span>
                 <div>
                   <p class="font-bold text-[#244443]">Recording complete</p>
                   <p id="completed-duration" class="mt-0.5 text-sm text-[#6b7977]">Duration: 00:00</p>
                 </div>
               </div>
-              <div class="mt-6 rounded-2xl border border-[#dce3df] bg-[#f7f9f7] p-3">
+              <div class="mt-6 border-y border-[#dce3df] py-3">
                 <audio id="recording-playback" class="w-full" controls preload="metadata"></audio>
               </div>
-              <div id="analysis-card" class="mt-5 rounded-2xl border border-[#d6dfda] bg-[#f5f8f6] p-4">
+
+              <div class="mt-6 border-t border-[#d6dfda] pt-5">
                 <div id="analysis-ready">
-                  <div class="flex items-start gap-3">
-                    <span class="grid size-9 shrink-0 place-items-center rounded-full bg-[#dfece7] text-[#286a63]">
-                      <svg class="size-4.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M8 4h8M9 2v4m6-4v4M7 7h10a2 2 0 0 1 2 2v7a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <path d="M9 12h.01M15 12h.01M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                    </span>
-                    <div>
-                      <p class="text-sm font-bold text-[#244443]">Optional research analysis</p>
-                      <p class="mt-1 text-xs leading-5 text-[#667572]">
-                        Compare speech patterns with ADReSSo research classes. A 91 MB model runs locally; audio is not uploaded.
-                      </p>
-                    </div>
-                  </div>
-                  <label class="mt-4 flex cursor-pointer items-start gap-2.5 rounded-xl bg-white p-3 text-xs leading-5 text-[#5f6f6c]">
+                  <p class="text-sm font-semibold text-[#244443]">Run the experimental model?</p>
+                  <p class="mt-1 text-xs leading-5 text-[#667572]">Optional. Compares acoustic patterns with two ADReSSo research classes. The 91 MB model runs locally.</p>
+                  <label class="mt-4 flex cursor-pointer items-start gap-2.5 border-l-2 border-[#b8c9c4] pl-3 text-xs leading-5 text-[#5f6f6c]">
                     <input id="analysis-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
-                    <span>I understand this experimental model cannot detect or diagnose Alzheimer’s disease.</span>
+                    <span>I understand this experimental model cannot detect or diagnose Alzheimer's disease.</span>
                   </label>
-                  <button id="analyze-recording" type="button" disabled class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#284f4d] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1f4442] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#216869] disabled:cursor-not-allowed disabled:opacity-40">
-                    <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M4 13h3l1.5-5 3 10 2.7-13 2.5 11 1.3-5 1 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                  <button id="analyze-recording" type="button" disabled class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#315f5a] px-4 py-3 text-sm font-semibold text-white hover:bg-[#264f4b] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#216869] disabled:cursor-not-allowed disabled:opacity-40">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h3l1.5-5 3 10 2.7-13 2.5 11 1.3-5 1 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                     Run on-device analysis
                   </button>
-                  <p class="mt-2 text-center text-[11px] leading-4 text-[#7b8784]">10–90 seconds of clear speech works best.</p>
+                  <p class="mt-2 text-center text-[11px] leading-4 text-[#7b8784]">10-90 seconds of clear speech works best.</p>
                 </div>
 
                 <div id="analysis-loading" class="hidden py-3 text-center" role="status" aria-live="polite">
                   <span class="mx-auto grid size-11 animate-pulse place-items-center rounded-full bg-[#dfece7] text-[#286a63]">
-                    <svg class="size-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M20 12a8 8 0 1 1-2.3-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                    <svg class="size-5 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                   </span>
-                  <p id="analysis-loading-title" class="mt-3 text-sm font-bold text-[#244443]">Loading research model…</p>
-                  <p id="analysis-loading-detail" class="mt-1 text-xs text-[#697875]">Preparing local inference</p>
-                  <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-[#dce5e1]">
-                    <div id="analysis-progress" class="h-full w-0 rounded-full bg-[#397a72] transition-[width] duration-300"></div>
+                  <p id="analysis-loading-title" class="mt-3 text-sm font-bold text-[#244443]">Preparing your recording...</p>
+                  <p id="analysis-loading-detail" class="mt-1 text-xs text-[#697875]">Audio remains on this device</p>
+                  <div class="mt-4 h-2 overflow-hidden rounded-full bg-[#dce5e1]" role="progressbar" aria-label="Analysis progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="analysis-progressbar">
+                    <div id="analysis-progress" class="h-full rounded-full bg-[#397a72] transition-[width] duration-300 motion-reduce:transition-none" style="width: 0%"></div>
                   </div>
+                  <p id="analysis-progress-label" class="mt-2 text-[11px] font-bold text-[#61736f]">0%</p>
                 </div>
 
                 <div id="analysis-result" class="hidden">
-                  <div class="flex items-start gap-3">
-                    <span id="analysis-result-icon" class="grid size-9 shrink-0 place-items-center rounded-full bg-[#ece8d9] text-[#74683d]">
-                      <svg class="size-4.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-                        <path d="M12 8v5m0 3h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                    </span>
-                    <div>
-                      <p class="text-[11px] font-bold tracking-[0.12em] text-[#6e795e] uppercase">Experimental comparison</p>
-                      <p id="analysis-result-title" class="mt-1 text-sm font-bold text-[#3e493f]">No clear match</p>
-                    </div>
-                  </div>
+                  <div id="result-graphic" class="mb-4 overflow-hidden border-y border-[#e2ded2] bg-[#f8f7f3] p-4 text-[#847447]" aria-hidden="true"></div>
+                  <p class="text-xs font-medium text-[#6e795e]">Experimental class comparison</p>
+                  <p id="analysis-result-title" class="mt-1 text-base font-bold text-[#3e493f]">No clear class match</p>
                   <div class="mt-4 space-y-3">
                     <div>
-                      <div class="mb-1 flex justify-between text-[11px] font-semibold text-[#63716e]">
-                        <span>Closer to people without dementia</span>
-                        <span id="control-score">0%</span>
-                      </div>
-                      <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="control-bar" class="h-full w-0 rounded-full bg-[#5b8c83]"></div></div>
+                      <div class="mb-1 flex justify-between gap-3 text-[11px] font-semibold text-[#63716e]"><span>Research control class</span><span id="control-score">0%</span></div>
+                      <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="control-bar" class="h-full rounded-full bg-[#5b8c83] transition-[width] duration-500" style="width: 0%"></div></div>
                     </div>
                     <div>
-                      <div class="mb-1 flex justify-between text-[11px] font-semibold text-[#63716e]">
-                        <span>Closer to people with Alzheimer’s dementia</span>
-                        <span id="ad-score">0%</span>
-                      </div>
-                      <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="ad-bar" class="h-full w-0 rounded-full bg-[#a77d58]"></div></div>
+                      <div class="mb-1 flex justify-between gap-3 text-[11px] font-semibold text-[#63716e]"><span>Alzheimer's research class</span><span id="ad-score">0%</span></div>
+                      <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="ad-bar" class="h-full rounded-full bg-[#a77d58] transition-[width] duration-500" style="width: 0%"></div></div>
                     </div>
                   </div>
-                  <p class="mt-4 rounded-xl bg-[#fffaf0] p-3 text-[11px] leading-5 text-[#756443]">
-                    The percentages show how closely this recording matched two groups in a small research dataset. They do not show your chance of having Alzheimer’s and cannot provide a diagnosis.
-                  </p>
-                  <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-lg py-2 text-xs font-bold text-[#346c66] hover:bg-[#e8f1ed] focus-visible:outline-2 focus-visible:outline-[#216869]">
-                    Run analysis again
-                  </button>
+                  <div class="mt-4 border-l-2 border-[#b8c9c4] pl-3">
+                    <p class="text-xs font-bold text-[#4f5f5b]">What does a control-like score mean?</p>
+                    <p class="mt-1 text-[11px] leading-5 text-[#697572]">A higher control score means closer to this model's research group without dementia. The source publishes no validated "typical healthy" range or normal score.</p>
+                  </div>
+                  <p class="mt-4 border-y border-[#e2ded2] py-3 text-[11px] leading-5 text-[#756443]">These percentages are class similarity outputs, not your chance of disease and not a diagnosis. Results from different pictures are not directly comparable.</p>
+
+                  <div class="mt-4 grid grid-cols-2 gap-2">
+                    <button id="share-result" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-2.5 text-xs font-semibold text-[#346c66] hover:bg-[#f3f6f5]">Share result</button>
+                    <button id="share-app-result" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-2.5 text-xs font-semibold text-[#346c66] hover:bg-[#f3f6f5]">Share app</button>
+                  </div>
+                  <p id="share-feedback" class="mt-2 min-h-4 text-center text-[11px] text-[#647571]" aria-live="polite"></p>
+
+                  <div class="mt-4 border-t border-[#d8e1dc] pt-4">
+                    <p class="text-xs font-semibold text-[#405a56]">Research-sharing prototype</p>
+                    <label class="mt-2 flex cursor-pointer items-start gap-2.5 border-l-2 border-[#b8c9c4] pl-3 text-[11px] leading-5 text-[#5f6f6c]">
+                      <input id="research-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
+                      <span>Share my results for scientific research. No audio, transcript, or identifiers are included.</span>
+                    </label>
+                    <button id="submit-research" type="button" disabled class="mt-3 w-full rounded-md border border-[#8ca9a2] bg-white px-3 py-2.5 text-xs font-semibold text-[#315f5a] disabled:cursor-not-allowed disabled:opacity-40">Submit preference</button>
+                    <p id="research-status" class="mt-2 text-[11px] leading-5 text-[#647571]" aria-live="polite">Prototype only: submissions are not stored yet.</p>
+                  </div>
+
+                  <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-lg py-2 text-xs font-bold text-[#346c66] hover:bg-[#e8f1ed]">Run analysis again</button>
                 </div>
 
                 <div id="analysis-error" class="hidden py-2 text-center">
                   <p class="text-sm font-bold text-[#774b45]">Analysis unavailable</p>
                   <p id="analysis-error-message" class="mt-1 text-xs leading-5 text-[#796965]">The model could not process this recording.</p>
-                  <button id="retry-analysis" type="button" class="mt-3 rounded-lg px-4 py-2 text-xs font-bold text-[#346c66] hover:bg-[#e8f1ed] focus-visible:outline-2 focus-visible:outline-[#216869]">Try again</button>
+                  <button id="retry-analysis" type="button" class="mt-3 rounded-lg px-4 py-2 text-xs font-bold text-[#346c66] hover:bg-[#e8f1ed]">Try again</button>
                 </div>
               </div>
-              <a id="download-recording" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#216869] px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#195d58] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#216869]" href="#">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+
+              <a id="download-recording" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#315f5a] px-5 py-3 text-sm font-semibold text-white hover:bg-[#264f4b]" href="#">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 Download recording
               </a>
               <div class="mt-3 grid grid-cols-2 gap-3">
-                <button id="record-again" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl border border-[#bdd0ca] bg-white px-3 py-3 text-sm font-bold text-[#275d58] transition hover:bg-[#f1f7f4] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#2b746d]">
-                  <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  Record again
-                </button>
-                <button id="delete-recording" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e0d8d3] bg-white px-3 py-3 text-sm font-bold text-[#80534d] transition hover:bg-[#fbf4f2] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#9a5148]">
-                  <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  Delete
-                </button>
+                <button id="try-another-picture" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-3 text-sm font-semibold text-[#275d58] hover:bg-[#f3f6f5]">Try another picture</button>
+                <button id="delete-recording" type="button" class="rounded-md border border-[#e0d8d3] bg-white px-3 py-3 text-sm font-semibold text-[#80534d] hover:bg-[#fbf4f2]">Delete</button>
               </div>
             </div>
 
             <div id="error-panel" class="hidden flex-col items-center py-4 text-center">
-              <span class="grid size-16 place-items-center rounded-full bg-[#fff0ed] text-[#a43e33]">
-                <svg class="size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 8v5m0 3h.01M10.3 4.4 3.2 17a2 2 0 0 0 1.7 3h14.2a2 2 0 0 0 1.7-3L13.7 4.4a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+              <span class="grid size-16 place-items-center rounded-full bg-[#f6e9e6] text-[#9a5148]">
+                <svg class="size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M10.3 4.4 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3L13.7 4.4a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
               </span>
-              <p class="mt-5 text-lg font-bold text-[#563c39]">Couldn’t start recording</p>
-              <p id="error-message" class="mt-2 max-w-xs text-sm leading-6 text-[#766865]">Check your microphone permissions and try again.</p>
-              <button id="retry-recording" type="button" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#216869] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#195d58] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#216869]">
-                Try again
-              </button>
+              <p class="mt-5 text-lg font-bold text-[#563c39]">Couldn't start recording</p>
+              <p id="error-message" class="mt-2 max-w-xs text-sm leading-6 text-[#766865]">Check microphone permissions and try again.</p>
+              <button id="retry-recording" type="button" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#216869] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#195d58]">Try again</button>
             </div>
 
             <div id="unsupported-panel" class="hidden flex-col items-center py-4 text-center">
-              <span class="grid size-16 place-items-center rounded-full bg-[#f0f1ed] text-[#66716d]">
-                <svg class="size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="1.8"/>
-                  <path d="m4 4 16 16M5 11a7 7 0 0 0 10.8 5.9M19 11a7 7 0 0 1-.3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-              </span>
-              <p class="mt-5 text-lg font-bold text-[#46514e]">Recording isn’t supported</p>
+              <p class="text-lg font-bold text-[#46514e]">Recording isn't supported</p>
               <p class="mt-2 max-w-xs text-sm leading-6 text-[#6b7977]">Open this page in a current version of Chrome, Edge, Firefox, or Safari.</p>
             </div>
           </div>
@@ -311,52 +365,90 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </aside>
       </section>
 
-      <section class="mt-8 rounded-2xl border border-[#dedbd0] bg-[#faf8f2] p-5 sm:p-6">
-        <div class="flex items-start gap-4">
-          <span class="grid size-10 shrink-0 place-items-center rounded-full bg-[#eee9d9] text-[#786c42]">
-            <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M9 21h6M9 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <div>
-            <h2 class="font-bold text-[#4c493b]">A note about this exercise</h2>
-            <p class="mt-1 text-sm leading-6 text-[#6f6b5e]">
-              This activity and its optional research-model output are for personal reflection only. Neither can diagnose Alzheimer’s disease or any other condition. If you have concerns about memory, language, or thinking, speak with a qualified healthcare professional.
-            </p>
-          </div>
+      <section class="mt-8 border-t border-[#d9ddda] pt-5">
+        <h2 class="font-semibold text-[#4c493b]">Not a medical test</h2>
+        <p class="mt-1 max-w-4xl text-sm leading-6 text-[#6f6b5e]">This can help families organize observations before seeking professional advice. Neither the exercise nor its optional output can diagnose Alzheimer's disease, dementia, mild cognitive impairment, or any condition. <a class="font-semibold text-[#526f68] underline underline-offset-4" href="${publicAssetUrl('science.html')}">Read the method, evidence, privacy details, and limitations.</a></p>
+      </section>
+
+      <section class="mt-8 border-t border-[#d9ddda] pt-5">
+        <h2 class="font-semibold text-[#4c493b]">Common questions</h2>
+        <div class="mt-3 divide-y divide-[#d9ddda] border-y border-[#d9ddda] text-sm leading-6">
+          <details class="py-3">
+            <summary class="cursor-pointer font-medium text-[#293f3d]">Can this screen for Alzheimer's disease?</summary>
+            <p class="mt-2 text-[#6f6b5e]">It is a screening helper for family reflection, not a clinical Alzheimer's screening test. It cannot diagnose Alzheimer's disease or dementia.</p>
+          </details>
+          <details class="py-3">
+            <summary class="cursor-pointer font-medium text-[#293f3d]">What does risk-class comparison mean?</summary>
+            <p class="mt-2 text-[#6f6b5e]">The optional model compares speech with two research classes. It is not a medical risk score, disease probability, or clinical classification.</p>
+          </details>
+          <details class="py-3">
+            <summary class="cursor-pointer font-medium text-[#293f3d]">What should families do with concerns?</summary>
+            <p class="mt-2 text-[#6f6b5e]">Use observations as notes for a healthcare professional, especially if memory, language, behavior, or daily function has changed.</p>
+          </details>
         </div>
       </section>
     </div>
 
     <footer class="border-t border-[#d9ddd6]">
       <div class="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs leading-5 text-[#71807d] sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-        <p>Audio stays on this device and is never uploaded.</p>
-        <p>Not a medical diagnosis.</p>
+        <p>Audio stays on this device. No research submissions are currently stored.</p>
+        <div class="flex gap-4">
+          <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('science.html')}">Method & limitations</a>
+          <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('about.html')}">About me</a>
+        </div>
       </div>
     </footer>
   </main>
 `
 
-type RecorderState = 'idle' | 'requesting' | 'recording' | 'completed' | 'error' | 'unsupported'
-
-const isRecordingSupported =
-  typeof MediaRecorder !== 'undefined' &&
-  Boolean(navigator.mediaDevices?.getUserMedia)
+const isRecordingSupported = typeof MediaRecorder !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia)
+const pictureDeck = loadPictureDeck()
+let currentState: RecorderState = isRecordingSupported ? 'idle' : 'unsupported'
+let mediaRecorder: MediaRecorder | null = null
+let mediaStream: MediaStream | null = null
+let audioChunks: BlobPart[] = []
+let audioUrl: string | null = null
+let recordedAudioBlob: Blob | null = null
+let recordingStartedAt = 0
+let recordedDuration = 0
+let timerId: number | undefined
+let permissionHelpTimer: number | undefined
+let permissionTimeoutTimer: number | undefined
+let microphoneRequestId = 0
+let recorderFailed = false
+let modelWorker: Worker | null = null
+let analysisInProgress = false
+let analysisProgressValue = 0
+let inferenceProgressTimer: number | undefined
+let resultRenderTimer: number | undefined
+let currentResult: AnalysisResult | null = null
 
 const panels: Record<RecorderState, HTMLElement> = {
   idle: getElement('idle-panel'),
   requesting: getElement('requesting-panel'),
+  calibrating: getElement('calibrating-panel'),
   recording: getElement('recording-panel'),
   completed: getElement('completed-panel'),
   error: getElement('error-panel'),
   unsupported: getElement('unsupported-panel'),
 }
 
-const startButton = getElement<HTMLButtonElement>('start-recording')
+const workspace = getElement('workspace')
+const scenePanel = getElement('scene-panel')
+const exercisePanel = getElement('exercise-panel')
+const sceneTitle = getElement('scene-title')
+const sceneImage = getElement<HTMLImageElement>('scene-image')
+const panelStep = getElement('panel-step')
+const panelTitle = getElement('panel-title')
+const panelDescription = getElement('panel-description')
+const startCalibrationButton = getElement<HTMLButtonElement>('start-calibration')
+const beginRecordingButton = getElement<HTMLButtonElement>('begin-recording')
+const cancelPermissionButton = getElement<HTMLButtonElement>('cancel-permission')
+const cancelCalibrationButton = getElement<HTMLButtonElement>('cancel-calibration')
+const permissionHelp = getElement('permission-help')
 const stopButton = getElement<HTMLButtonElement>('stop-recording')
 const retryButton = getElement<HTMLButtonElement>('retry-recording')
-const recordAgainButton = getElement<HTMLButtonElement>('record-again')
+const tryAnotherPictureButton = getElement<HTMLButtonElement>('try-another-picture')
 const deleteButton = getElement<HTMLButtonElement>('delete-recording')
 const timerElement = getElement('recording-timer')
 const recordingGuidance = getElement('recording-guidance')
@@ -376,33 +468,51 @@ const analysisError = getElement('analysis-error')
 const analysisLoadingTitle = getElement('analysis-loading-title')
 const analysisLoadingDetail = getElement('analysis-loading-detail')
 const analysisProgress = getElement('analysis-progress')
+const analysisProgressbar = getElement('analysis-progressbar')
+const analysisProgressLabel = getElement('analysis-progress-label')
 const analysisResultTitle = getElement('analysis-result-title')
 const analysisErrorMessage = getElement('analysis-error-message')
+const resultGraphic = getElement('result-graphic')
 const controlScoreElement = getElement('control-score')
 const adScoreElement = getElement('ad-score')
 const controlBar = getElement('control-bar')
 const adBar = getElement('ad-bar')
+const shareAppNavButton = getElement<HTMLButtonElement>('share-app-nav')
+const shareAppResultButton = getElement<HTMLButtonElement>('share-app-result')
+const shareResultButton = getElement<HTMLButtonElement>('share-result')
+const shareFeedback = getElement('share-feedback')
+const researchConsent = getElement<HTMLInputElement>('research-consent')
+const submitResearchButton = getElement<HTMLButtonElement>('submit-research')
+const researchStatus = getElement('research-status')
 
-let currentState: RecorderState = isRecordingSupported ? 'idle' : 'unsupported'
-let mediaRecorder: MediaRecorder | null = null
-let mediaStream: MediaStream | null = null
-let audioChunks: BlobPart[] = []
-let audioUrl: string | null = null
-let recordedAudioBlob: Blob | null = null
-let recordingStartedAt = 0
-let recordedDuration = 0
-let timerId: number | undefined
-let recorderFailed = false
-let modelWorker: Worker | null = null
-let analysisInProgress = false
+renderCurrentScene()
+setState(currentState)
+
+startCalibrationButton.addEventListener('click', startCalibration)
+beginRecordingButton.addEventListener('click', beginRecording)
+cancelPermissionButton.addEventListener('click', cancelCalibration)
+cancelCalibrationButton.addEventListener('click', cancelCalibration)
+stopButton.addEventListener('click', stopRecording)
+retryButton.addEventListener('click', startCalibration)
+tryAnotherPictureButton.addEventListener('click', showNextPicture)
+deleteButton.addEventListener('click', deleteRecording)
+analysisConsent.addEventListener('change', () => {
+  analyzeButton.disabled = !analysisConsent.checked
+})
+analyzeButton.addEventListener('click', analyzeRecording)
+reanalyzeButton.addEventListener('click', analyzeRecording)
+retryAnalysisButton.addEventListener('click', analyzeRecording)
+shareAppNavButton.addEventListener('click', shareApp)
+shareAppResultButton.addEventListener('click', shareApp)
+shareResultButton.addEventListener('click', shareResult)
+researchConsent.addEventListener('change', () => {
+  submitResearchButton.disabled = !researchConsent.checked
+})
+submitResearchButton.addEventListener('click', submitResearchPreference)
 
 function getElement<T extends HTMLElement = HTMLElement>(id: string): T {
   const element = document.getElementById(id)
-
-  if (!element) {
-    throw new Error(`Missing required element: #${id}`)
-  }
-
+  if (!element) throw new Error(`Missing required element: #${id}`)
   return element as T
 }
 
@@ -415,9 +525,15 @@ function setState(nextState: RecorderState, errorMessage?: string): void {
     panel.classList.toggle('flex', isActive)
   })
 
+  const activeStep = getExerciseStep(nextState)
+  renderStepIndicator(activeStep)
+  renderPanelHeading(activeStep)
+  renderReviewLayout(nextState === 'completed')
+
   const statuses: Record<RecorderState, string> = {
     idle: 'Microphone inactive',
     requesting: 'Waiting for microphone permission',
+    calibrating: 'Microphone ready; warm-up is not recorded',
     recording: 'Recording in progress',
     completed: 'Recording saved in this browser',
     error: 'Microphone unavailable',
@@ -425,63 +541,184 @@ function setState(nextState: RecorderState, errorMessage?: string): void {
   }
 
   statusElement.innerHTML = `
-    <span class="size-1.5 rounded-full ${nextState === 'recording' ? 'animate-pulse bg-[#c6493b]' : 'bg-[#87a39d]'}"></span>
+    <span class="size-1.5 ${nextState === 'recording' ? 'animate-pulse rounded-full bg-[#c6493b]' : 'rounded-full bg-[#87a39d]'}"></span>
     ${statuses[nextState]}
   `
 
-  if (errorMessage) {
-    errorElement.textContent = errorMessage
+  if (errorMessage) errorElement.textContent = errorMessage
+}
+
+function getExerciseStep(state: RecorderState): 1 | 2 | 3 {
+  if (state === 'completed') return 3
+  if (state === 'idle' || state === 'unsupported') return 1
+  return 2
+}
+
+function renderStepIndicator(activeStep: 1 | 2 | 3): void {
+  document.querySelectorAll<HTMLElement>('.step-card').forEach((card) => {
+    const step = Number(card.dataset.step)
+    const badge = card.querySelector<HTMLElement>('.step-badge')
+    const isComplete = step < activeStep
+    const isActive = step === activeStep
+
+    card.setAttribute('aria-current', isActive ? 'step' : 'false')
+    card.className = `step-card flex items-center gap-3 rounded-lg border px-4 py-3 transition-all duration-500 motion-reduce:transition-none ${
+      isActive
+        ? '-translate-y-0.5 border-[#315f5a] bg-white text-[#284746]'
+        : isComplete
+          ? 'border-[#9fb8b1] bg-white text-[#315f5a]'
+          : 'border-[#d8ddd7] bg-[#fbfbf9] text-[#657572]'
+    }`
+
+    if (badge) {
+      badge.textContent = isComplete ? '✓' : String(step)
+      badge.className = `step-badge grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-all duration-500 motion-reduce:transition-none ${
+        isActive
+          ? 'scale-105 bg-[#315f5a] text-white ring-2 ring-[#dbe9e4]'
+          : isComplete
+            ? 'bg-[#4f8279] text-white'
+            : 'bg-[#dceae5] text-[#285b57]'
+      }`
+    }
+  })
+}
+
+function renderPanelHeading(activeStep: 1 | 2 | 3): void {
+  const headings: Record<1 | 2 | 3, [string, string]> = {
+    1: ['Study the picture', 'Take a moment to notice the whole scene before recording.'],
+    2: ['Record your description', 'Speak naturally. Your warm-up is excluded from the recording.'],
+    3: ['Review your recording', 'Listen back, save it, or run the optional local analysis.'],
+  }
+
+  panelStep.textContent = `Step ${activeStep} of 3`
+  panelTitle.textContent = headings[activeStep][0]
+  panelDescription.textContent = headings[activeStep][1]
+}
+
+function renderReviewLayout(isReviewing: boolean): void {
+  workspace.className = isReviewing
+    ? 'grid items-start gap-0 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none lg:grid-cols-[minmax(0,0fr)_minmax(0,1fr)]'
+    : 'grid items-start gap-6 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.75fr)] lg:gap-8'
+  scenePanel.className = isReviewing
+    ? 'pointer-events-none min-w-0 max-h-0 -translate-y-3 overflow-hidden opacity-0 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
+    : 'min-w-0 max-h-[1200px] translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
+  exercisePanel.className = isReviewing
+    ? 'min-w-0 w-full max-w-4xl justify-self-center overflow-hidden rounded-lg border border-[#cfd8d2] bg-white transition-[width,max-width] duration-500 motion-reduce:transition-none'
+    : 'min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-lg border border-[#cfd8d2] bg-white transition-[width,max-width] duration-500 motion-reduce:transition-none'
+}
+
+function renderCurrentScene(): void {
+  const scene = getCurrentScene()
+  sceneTitle.textContent = scene.title
+  sceneImage.src = scene.src
+  sceneImage.alt = scene.alt
+}
+
+function getCurrentScene(): PictureScene {
+  return scenes.find(({ id }) => id === pictureDeck.currentId) ?? scenes[0]
+}
+
+function loadPictureDeck(): PictureDeckState {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem('mindful-check-picture-deck-v1') ?? '') as PictureDeckState
+    const allIds = [parsed.currentId, ...parsed.remainingIds]
+    const isValid =
+      sceneIds.includes(parsed.currentId) &&
+      parsed.remainingIds.every((id) => sceneIds.includes(id)) &&
+      new Set(allIds).size === allIds.length
+    if (isValid) return parsed
+  } catch {
+    // Session storage is optional.
+  }
+
+  const deck = createPictureDeck(sceneIds)
+  persistPictureDeck(deck)
+  return deck
+}
+
+function persistPictureDeck(deck: PictureDeckState): void {
+  try {
+    sessionStorage.setItem('mindful-check-picture-deck-v1', JSON.stringify(deck))
+  } catch {
+    // In-memory deck still works.
   }
 }
 
-function chooseMimeType(): string {
-  const candidates = [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/mp4',
-    'audio/ogg;codecs=opus',
-  ]
-
-  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
+function createPictureDeck(ids: readonly string[]): PictureDeckState {
+  const shuffled = shuffle(ids)
+  return { currentId: shuffled[0], remainingIds: shuffled.slice(1) }
 }
 
-async function startRecording(): Promise<void> {
-  if (!isRecordingSupported || currentState === 'requesting' || currentState === 'recording') {
-    return
+function advancePictureDeck(deck: PictureDeckState, ids: readonly string[]): PictureDeckState {
+  if (deck.remainingIds.length > 0) {
+    return { currentId: deck.remainingIds[0], remainingIds: deck.remainingIds.slice(1) }
   }
+
+  const nextCycle = shuffle(ids)
+  if (nextCycle.length > 1 && nextCycle[0] === deck.currentId) {
+    ;[nextCycle[0], nextCycle[1]] = [nextCycle[1], nextCycle[0]]
+  }
+  return { currentId: nextCycle[0], remainingIds: nextCycle.slice(1) }
+}
+
+function shuffle<T>(items: readonly T[]): T[] {
+  const shuffled = [...items]
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]]
+  }
+  return shuffled
+}
+
+async function startCalibration(): Promise<void> {
+  if (!isRecordingSupported || ['requesting', 'calibrating', 'recording'].includes(currentState)) return
 
   resetAudio()
   setState('requesting')
+  const requestId = beginMicrophoneRequest()
 
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      },
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     })
+    if (requestId !== microphoneRequestId) {
+      stream.getTracks().forEach((track) => track.stop())
+      return
+    }
 
+    clearMicrophoneRequestTimers()
+    permissionHelp.classList.add('hidden')
+    mediaStream = stream
+    setState('calibrating')
+  } catch (error) {
+    if (requestId !== microphoneRequestId) return
+
+    clearMicrophoneRequestTimers()
+    permissionHelp.classList.add('hidden')
+    releaseMicrophone()
+    setState('error', getMicrophoneErrorMessage(error))
+  }
+}
+
+function beginRecording(): void {
+  if (!mediaStream || currentState !== 'calibrating') return
+
+  try {
+    clearMicrophoneRequestTimers()
     const mimeType = chooseMimeType()
-    mediaRecorder = mimeType
-      ? new MediaRecorder(mediaStream, { mimeType })
-      : new MediaRecorder(mediaStream)
+    mediaRecorder = mimeType ? new MediaRecorder(mediaStream, { mimeType }) : new MediaRecorder(mediaStream)
     audioChunks = []
     recorderFailed = false
 
     mediaRecorder.addEventListener('dataavailable', (event) => {
-      if (event.data.size > 0) {
-        audioChunks.push(event.data)
-      }
+      if (event.data.size > 0) audioChunks.push(event.data)
     })
-
     mediaRecorder.addEventListener('error', () => {
       recorderFailed = true
       stopTimer()
       releaseMicrophone()
       setState('error', 'The browser could not continue recording. Check your microphone and try again.')
     }, { once: true })
-
     mediaRecorder.addEventListener('stop', finalizeRecording, { once: true })
     mediaRecorder.start(250)
 
@@ -490,16 +727,20 @@ async function startRecording(): Promise<void> {
     updateTimer()
     timerId = window.setInterval(updateTimer, 250)
     setState('recording')
-  } catch (error) {
+  } catch {
     releaseMicrophone()
-    setState('error', getMicrophoneErrorMessage(error))
+    setState('error', 'The browser could not start audio capture. Check your microphone and try again.')
   }
 }
 
+function cancelCalibration(): void {
+  cancelPendingMicrophoneRequest()
+  releaseMicrophone()
+  setState('idle')
+}
+
 function stopRecording(): void {
-  if (!mediaRecorder || mediaRecorder.state !== 'recording') {
-    return
-  }
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') return
 
   stopButton.disabled = true
   recordedDuration = Date.now() - recordingStartedAt
@@ -510,10 +751,7 @@ function stopRecording(): void {
 function finalizeRecording(): void {
   stopButton.disabled = false
   releaseMicrophone()
-
-  if (recorderFailed) {
-    return
-  }
+  if (recorderFailed) return
 
   if (audioChunks.length === 0) {
     setState('error', 'No audio was captured. Check your microphone and try again.')
@@ -533,26 +771,81 @@ function finalizeRecording(): void {
   setState('completed')
 }
 
+function showNextPicture(): void {
+  resetAudio()
+  resetRecordingDisplay()
+  const nextDeck = advancePictureDeck(pictureDeck, sceneIds)
+  pictureDeck.currentId = nextDeck.currentId
+  pictureDeck.remainingIds = nextDeck.remainingIds
+  persistPictureDeck(pictureDeck)
+  renderCurrentScene()
+  setState('idle')
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function deleteRecording(): void {
+  resetAudio()
+  resetRecordingDisplay()
+  setState('idle')
+  startCalibrationButton.focus()
+}
+
+function chooseMimeType(): string {
+  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
+}
+
 function updateTimer(): void {
   recordedDuration = Date.now() - recordingStartedAt
   timerElement.textContent = formatDuration(recordedDuration)
-  const seconds = Math.floor(recordedDuration / 1000)
-
-  if (seconds < 30) {
-    recordingGuidance.textContent = `Keep going if you can — about ${30 - seconds} seconds to the recommended minimum.`
-  } else if (seconds <= 60) {
-    recordingGuidance.textContent = 'Good recording length. Stop when you have finished describing the scene.'
-  } else if (seconds <= 90) {
-    recordingGuidance.textContent = 'You have enough audio. Wrap up when you are ready.'
-  } else {
-    recordingGuidance.textContent = 'Only the first 90 seconds will be used for optional analysis.'
-  }
+  recordingGuidance.textContent = getRecordingGuidance(Math.floor(recordedDuration / 1000))
 }
 
 function stopTimer(): void {
   if (timerId !== undefined) {
     window.clearInterval(timerId)
     timerId = undefined
+  }
+}
+
+function beginMicrophoneRequest(): number {
+  const requestId = microphoneRequestId + 1
+  microphoneRequestId = requestId
+  clearMicrophoneRequestTimers()
+  permissionHelp.classList.add('hidden')
+
+  permissionHelpTimer = window.setTimeout(() => {
+    if (requestId === microphoneRequestId && currentState === 'requesting') {
+      permissionHelp.classList.remove('hidden')
+    }
+  }, 4_000)
+
+  permissionTimeoutTimer = window.setTimeout(() => {
+    if (requestId !== microphoneRequestId || currentState !== 'requesting') return
+
+    microphoneRequestId += 1
+    clearMicrophoneRequestTimers()
+    permissionHelp.classList.add('hidden')
+    setState('error', 'The browser did not finish microphone permission. Check the address bar microphone icon or site settings, then try again.')
+  }, 20_000)
+
+  return requestId
+}
+
+function cancelPendingMicrophoneRequest(): void {
+  microphoneRequestId += 1
+  clearMicrophoneRequestTimers()
+  permissionHelp.classList.add('hidden')
+}
+
+function clearMicrophoneRequestTimers(): void {
+  if (permissionHelpTimer !== undefined) {
+    window.clearTimeout(permissionHelpTimer)
+    permissionHelpTimer = undefined
+  }
+  if (permissionTimeoutTimer !== undefined) {
+    window.clearTimeout(permissionTimeoutTimer)
+    permissionTimeoutTimer = undefined
   }
 }
 
@@ -573,36 +866,32 @@ function resetAudio(): void {
   }
 
   downloadLink.removeAttribute('href')
+  downloadLink.removeAttribute('download')
   recordedAudioBlob = null
   audioChunks = []
 }
 
-function deleteRecording(): void {
-  resetAudio()
+function resetRecordingDisplay(): void {
   recordedDuration = 0
   timerElement.textContent = '00:00'
-  recordingGuidance.textContent = 'Keep describing the picture. Aim for at least 30 seconds.'
-  setState('idle')
-  startButton.focus()
+  recordingGuidance.textContent = getRecordingGuidance(0)
 }
-
-type ModelWorkerMessage =
-  | { type: 'progress'; progress: number }
-  | { type: 'status'; status: 'loading' | 'analyzing' }
-  | { type: 'result'; adScore: number; controlScore: number }
-  | { type: 'error'; message: string }
 
 async function analyzeRecording(): Promise<void> {
   if (!recordedAudioBlob || analysisInProgress) return
 
+  resetResearchSharing()
   analysisInProgress = true
+  currentResult = null
   showAnalysisPanel('loading')
-  analysisProgress.style.width = '0%'
-  analysisLoadingTitle.textContent = 'Preparing your recording…'
+  setAnalysisProgress(0, true)
+  analysisLoadingTitle.textContent = 'Preparing your recording...'
   analysisLoadingDetail.textContent = 'Audio remains on this device'
 
   try {
+    setAnalysisProgress(4)
     const waveform = await decodeRecording(recordedAudioBlob)
+    setAnalysisProgress(10)
     const worker = getModelWorker()
     worker.postMessage({ type: 'analyze', audio: waveform }, [waveform.buffer])
   } catch (error) {
@@ -613,31 +902,36 @@ async function analyzeRecording(): Promise<void> {
 function getModelWorker(): Worker {
   if (modelWorker) return modelWorker
 
-  modelWorker = new Worker(new URL('./model.worker.ts', import.meta.url), { type: 'module' })
+  modelWorker = new Worker(new URL('./worker/model.worker.ts', import.meta.url), { type: 'module' })
   modelWorker.addEventListener('message', (event: MessageEvent<ModelWorkerMessage>) => {
     const message = event.data
 
     if (message.type === 'progress') {
-      analysisProgress.style.width = `${Math.min(100, Math.max(0, message.progress))}%`
+      setAnalysisProgress(mapModelProgress(message.progress))
       analysisLoadingDetail.textContent = `Loading local model: ${message.progress}%`
       return
     }
 
     if (message.type === 'status') {
       if (message.status === 'loading') {
-        analysisLoadingTitle.textContent = 'Loading research model…'
+        setAnalysisProgress(12)
+        analysisLoadingTitle.textContent = 'Loading research model...'
         analysisLoadingDetail.textContent = 'First use may take a moment'
       } else {
-        analysisProgress.style.width = '100%'
-        analysisLoadingTitle.textContent = 'Analyzing speech patterns…'
+        analysisLoadingTitle.textContent = 'Analyzing speech patterns...'
         analysisLoadingDetail.textContent = 'Running locally in your browser'
+        startInferenceProgress()
       }
       return
     }
 
     if (message.type === 'result') {
       analysisInProgress = false
-      renderAnalysisResult(message.adScore, message.controlScore)
+      stopAnalysisProgress()
+      setAnalysisProgress(100)
+      resultRenderTimer = window.setTimeout(() => {
+        renderAnalysisResult(message.adScore, message.controlScore)
+      }, 250)
       return
     }
 
@@ -652,6 +946,35 @@ function getModelWorker(): Worker {
   })
 
   return modelWorker
+}
+
+function setAnalysisProgress(value: number, force = false): void {
+  const nextValue = Math.min(100, Math.max(0, value))
+  analysisProgressValue = force ? nextValue : Math.max(analysisProgressValue, nextValue)
+  const roundedValue = Math.round(analysisProgressValue)
+  analysisProgress.style.width = `${roundedValue}%`
+  analysisProgressbar.setAttribute('aria-valuenow', String(roundedValue))
+  analysisProgressLabel.textContent = `${roundedValue}%`
+}
+
+function startInferenceProgress(): void {
+  stopAnalysisProgress()
+  setAnalysisProgress(82)
+  inferenceProgressTimer = window.setInterval(() => {
+    const increment = Math.max(0.4, (95 - analysisProgressValue) * 0.08)
+    setAnalysisProgress(Math.min(95, analysisProgressValue + increment))
+  }, 350)
+}
+
+function stopAnalysisProgress(): void {
+  if (inferenceProgressTimer !== undefined) {
+    window.clearInterval(inferenceProgressTimer)
+    inferenceProgressTimer = undefined
+  }
+  if (resultRenderTimer !== undefined) {
+    window.clearTimeout(resultRenderTimer)
+    resultRenderTimer = undefined
+  }
 }
 
 async function decodeRecording(blob: Blob): Promise<Float32Array> {
@@ -669,16 +992,8 @@ async function decodeRecording(blob: Blob): Promise<Float32Array> {
     }
 
     const resampled = resampleAudio(mono, audioBuffer.sampleRate, 16_000)
-    const minimumSamples = 5 * 16_000
-    const maximumSamples = 90 * 16_000
-
-    if (resampled.length < minimumSamples) {
-      throw new Error('short-recording')
-    }
-
-    return resampled.length > maximumSamples
-      ? resampled.slice(0, maximumSamples)
-      : resampled
+    if (resampled.length < 5 * 16_000) throw new Error('short-recording')
+    return resampled.length > 90 * 16_000 ? resampled.slice(0, 90 * 16_000) : resampled
   } finally {
     await audioContext.close()
   }
@@ -703,27 +1018,73 @@ function resampleAudio(input: Float32Array, sourceRate: number, targetRate: numb
 }
 
 function renderAnalysisResult(adScore: number, controlScore: number): void {
-  const safeAdScore = Math.min(1, Math.max(0, adScore))
-  const safeControlScore = Math.min(1, Math.max(0, controlScore))
-  const adPercent = Math.round(safeAdScore * 100)
-  const controlPercent = Math.round(safeControlScore * 100)
+  currentResult = normalizeAnalysisResult(adScore, controlScore)
+  const adPercent = Math.round(currentResult.adScore * 100)
+  const controlPercent = Math.round(currentResult.controlScore * 100)
 
-  if (safeAdScore >= 0.65) {
-    analysisResultTitle.textContent = 'Speech patterns were closer to the Alzheimer’s research group'
-  } else if (safeAdScore <= 0.35) {
-    analysisResultTitle.textContent = 'Speech patterns were closer to the group without dementia'
-  } else {
-    analysisResultTitle.textContent = 'The model found no clear match'
+  const titles: Record<ResultBand, string> = {
+    'control-like': 'More similar to the research control class',
+    mixed: 'No clear class match',
+    'ad-like': "More similar to the Alzheimer's research class",
   }
 
+  analysisResultTitle.textContent = titles[currentResult.band]
   adScoreElement.textContent = `${adPercent}%`
   controlScoreElement.textContent = `${controlPercent}%`
   adBar.style.width = `${adPercent}%`
   controlBar.style.width = `${controlPercent}%`
+  resultGraphic.className = getResultGraphicClass(currentResult.band)
+  resultGraphic.innerHTML = getResultGraphic(currentResult.band)
   showAnalysisPanel('result')
 }
 
-function showAnalysisPanel(panel: 'ready' | 'loading' | 'result' | 'error'): void {
+function normalizeAnalysisResult(adScore: number, controlScore: number): AnalysisResult {
+  const safeAdScore = Math.min(1, Math.max(0, adScore))
+  const safeControlScore = Math.min(1, Math.max(0, controlScore))
+  return {
+    adScore: safeAdScore,
+    controlScore: safeControlScore,
+    band: getResultBand(safeAdScore),
+  }
+}
+
+function getResultBand(adScore: number): ResultBand {
+  if (adScore >= 0.65) return 'ad-like'
+  if (adScore <= 0.35) return 'control-like'
+  return 'mixed'
+}
+
+function getResultGraphicClass(band: ResultBand): string {
+  const classes: Record<ResultBand, string> = {
+    'control-like': 'mb-4 overflow-hidden border-y border-[#d8e1dc] bg-[#f5f7f6] p-4 text-[#397a72]',
+    mixed: 'mb-4 overflow-hidden border-y border-[#e2ded2] bg-[#f8f7f3] p-4 text-[#847447]',
+    'ad-like': 'mb-4 overflow-hidden border-y border-[#e5d9d2] bg-[#f8f5f3] p-4 text-[#986b4d]',
+  }
+  return classes[band]
+}
+
+function getResultGraphic(band: ResultBand): string {
+  const graphics: Record<ResultBand, string> = {
+    'control-like': `
+      <svg class="h-24 w-full" viewBox="0 0 320 96" fill="none">
+        <path d="M18 61c30-38 52 18 82-10s49-15 70 5 43 18 65-6 45-20 67-1" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="44" cy="43" r="7" fill="currentColor" opacity=".3"/><circle cx="153" cy="38" r="10" fill="currentColor" opacity=".2"/><circle cx="271" cy="39" r="7" fill="currentColor" opacity=".35"/>
+      </svg>`,
+    mixed: `
+      <svg class="h-24 w-full" viewBox="0 0 320 96" fill="none">
+        <path d="M24 67c35 0 38-39 72-39s39 39 72 39 39-39 72-39 40 39 58 39" stroke="currentColor" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+        <path d="M24 29c35 0 38 39 72 39s39-39 72-39 39 39 72 39 40-39 58-39" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      </svg>`,
+    'ad-like': `
+      <svg class="h-24 w-full" viewBox="0 0 320 96" fill="none">
+        <path d="M20 56h45l12-25 18 43 20-33h35l17 18 21-36 20 51 19-29h32l14 11h27" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="77" cy="31" r="6" fill="currentColor" opacity=".25"/><circle cx="188" cy="23" r="7" fill="currentColor" opacity=".25"/><circle cx="253" cy="45" r="6" fill="currentColor" opacity=".3"/>
+      </svg>`,
+  }
+  return graphics[band]
+}
+
+function showAnalysisPanel(panel: AnalysisPanel): void {
   analysisReady.classList.toggle('hidden', panel !== 'ready')
   analysisLoading.classList.toggle('hidden', panel !== 'loading')
   analysisResult.classList.toggle('hidden', panel !== 'result')
@@ -732,6 +1093,7 @@ function showAnalysisPanel(panel: 'ready' | 'loading' | 'result' | 'error'): voi
 
 function showAnalysisError(message: string): void {
   analysisInProgress = false
+  stopAnalysisProgress()
   analysisErrorMessage.textContent = message
   showAnalysisPanel('error')
 }
@@ -740,13 +1102,11 @@ function getAnalysisErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message === 'short-recording') {
     return 'Record at least five seconds of speech before running the model.'
   }
-
   return 'This audio format could not be processed. Record again or try another current browser.'
 }
 
 function formatModelError(message: string): string {
   const detail = message.trim().replace(/\s+/g, ' ').slice(0, 180)
-
   return detail
     ? `The local model could not start. Technical detail: ${detail}`
     : 'The local model could not start. Refresh the page and try again.'
@@ -754,13 +1114,27 @@ function formatModelError(message: string): string {
 
 function resetAnalysis(): void {
   analysisInProgress = false
+  currentResult = null
+  stopAnalysisProgress()
   analysisConsent.checked = false
   analyzeButton.disabled = true
-  analysisProgress.style.width = '0%'
+  setAnalysisProgress(0, true)
   adBar.style.width = '0%'
   controlBar.style.width = '0%'
+  adScoreElement.textContent = '0%'
+  controlScoreElement.textContent = '0%'
+  shareFeedback.textContent = ''
+  resetResearchSharing()
   showAnalysisPanel('ready')
   disposeModelWorker()
+}
+
+function resetResearchSharing(): void {
+  researchConsent.checked = false
+  researchConsent.disabled = false
+  submitResearchButton.disabled = true
+  submitResearchButton.textContent = 'Submit preference'
+  researchStatus.textContent = 'Prototype only: submissions are not stored yet.'
 }
 
 function disposeModelWorker(): void {
@@ -768,12 +1142,107 @@ function disposeModelWorker(): void {
   modelWorker = null
 }
 
+async function submitResearchPreference(): Promise<void> {
+  if (!currentResult || !researchConsent.checked) return
+
+  submitResearchButton.textContent = 'Preparing...'
+  const payload: ResearchSubmissionV1 = {
+    schemaVersion: '1.0',
+    consentVersion: '2026-06-15',
+    imageId: getCurrentScene().id,
+    model: {
+      id: 'giyong/wav2vec2-base_ADReSSo',
+      revision: '24e5428d688f83a0f7a2469871c998329f5ef2df',
+    },
+    scores: {
+      control: currentResult.controlScore,
+      ad: currentResult.adScore,
+    },
+    resultBand: currentResult.band,
+    recordingDurationMs: recordedDuration,
+    browserFamily: detectBrowserFamily(navigator.userAgent),
+    submittedAt: new Date().toISOString(),
+  }
+
+  await Promise.resolve(payload)
+  researchConsent.disabled = true
+  submitResearchButton.disabled = true
+  submitResearchButton.textContent = 'Preference received'
+  researchStatus.textContent = 'Research sharing preference received. Prototype submissions are not stored yet.'
+}
+
+async function shareApp(): Promise<void> {
+  await shareContent({
+    title: "Alzheimer's screening helper for families",
+    text: 'A private picture-description exercise with optional experimental speech risk-class comparison. Not diagnostic.',
+    url: publicAssetUrl(),
+  })
+}
+
+async function shareResult(): Promise<void> {
+  if (!currentResult) return
+
+  const descriptions: Record<ResultBand, string> = {
+    'control-like': 'My recording was more similar to the research control class.',
+    mixed: 'My recording had no clear research-class match.',
+    'ad-like': "My recording was more similar to the Alzheimer's research class.",
+  }
+
+  await shareContent({
+    title: 'Experimental picture-description comparison',
+    text: `${descriptions[currentResult.band]} This experimental result is not a diagnosis or disease probability.`,
+    url: publicAssetUrl(),
+  })
+}
+
+async function shareContent(data: ShareData): Promise<void> {
+  shareFeedback.textContent = ''
+
+  try {
+    if (navigator.share) {
+      await navigator.share(data)
+      shareFeedback.textContent = 'Share sheet opened.'
+      return
+    }
+
+    await copyText(`${data.title}\n${data.text}\n${data.url}`)
+    shareFeedback.textContent = 'Share text copied to clipboard.'
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return
+    shareFeedback.textContent = 'Sharing is unavailable in this browser.'
+  }
+}
+
+async function copyText(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.className = 'fixed left-[-9999px] top-0'
+  document.body.append(textarea)
+  textarea.select()
+  document.execCommand('copy')
+  textarea.remove()
+}
+
+function mapModelProgress(progress: number): number {
+  return 10 + Math.min(100, Math.max(0, progress)) * 0.7
+}
+
+function getRecordingGuidance(seconds: number): string {
+  if (seconds < 10) return 'Start with the main action, then add details.'
+  if (seconds < 30) return `Keep going if you can - about ${30 - seconds} seconds to the recommended minimum.`
+  if (seconds <= 60) return 'Good length. Stop when you have finished describing the scene.'
+  if (seconds <= 90) return 'You have enough audio. Wrap up when you are ready.'
+  return 'Only the first 90 seconds will be used for optional analysis.'
+}
+
 function formatDuration(milliseconds: number): string {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000))
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  return `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`
 }
 
 function formatDownloadTimestamp(): string {
@@ -792,35 +1261,18 @@ function getMicrophoneErrorMessage(error: unknown): string {
   }
 
   const messages: Record<string, string> = {
-    NotAllowedError: 'Microphone access was blocked. Enable it in your browser’s site settings, then try again.',
+    NotAllowedError: "Microphone access was blocked. Enable it in your browser's site settings, then try again.",
     NotFoundError: 'No microphone was found. Connect a microphone and try again.',
     NotReadableError: 'Your microphone is busy or unavailable. Close other apps using it, then try again.',
     SecurityError: 'Microphone access requires a secure browser connection.',
   }
-
   return messages[error.name] ?? 'The microphone could not be started. Check your browser settings and try again.'
 }
 
-startButton.addEventListener('click', startRecording)
-stopButton.addEventListener('click', stopRecording)
-retryButton.addEventListener('click', startRecording)
-recordAgainButton.addEventListener('click', startRecording)
-deleteButton.addEventListener('click', deleteRecording)
-analysisConsent.addEventListener('change', () => {
-  analyzeButton.disabled = !analysisConsent.checked
-})
-analyzeButton.addEventListener('click', analyzeRecording)
-reanalyzeButton.addEventListener('click', analyzeRecording)
-retryAnalysisButton.addEventListener('click', analyzeRecording)
-
-window.addEventListener('pagehide', () => {
-  stopTimer()
-  releaseMicrophone()
-  disposeModelWorker()
-
-  if (audioUrl) {
-    URL.revokeObjectURL(audioUrl)
-  }
-})
-
-setState(currentState)
+function detectBrowserFamily(userAgent: string): string {
+  if (/Edg\//.test(userAgent)) return 'Edge'
+  if (/Firefox\//.test(userAgent)) return 'Firefox'
+  if (/Chrome\//.test(userAgent)) return 'Chrome'
+  if (/Safari\//.test(userAgent) && !/Chrome\//.test(userAgent)) return 'Safari'
+  return 'Other'
+}

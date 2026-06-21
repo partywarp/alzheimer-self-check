@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.shared.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "WebWorker"],
+    "types": ["vite/client"],
+    "rootDir": "src/worker",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo"
+  },
+  "include": ["src/worker/**/*.ts"]
+}

@@ -1,7 +1,11 @@
 import { env, pipeline } from '@huggingface/transformers'
 
-const publicAssetUrl = (path: string) =>
-  `${import.meta.env.BASE_URL}${path}`
+const appBaseUrl = () =>
+  import.meta.env.DEV
+    ? `${self.location.origin}/`
+    : new URL(import.meta.env.BASE_URL, self.location.origin).href
+
+const publicAssetUrl = (path: string) => new URL(path, appBaseUrl()).href
 
 type WorkerRequest = {
   type: 'analyze'
@@ -34,6 +38,7 @@ let classifierPromise: ReturnType<typeof createClassifier> | null = null
 async function createClassifier() {
   return pipeline('audio-classification', 'adresso-wav2vec2', {
     dtype: 'q8',
+    local_files_only: true,
     progress_callback: (progress) => {
       if (progress.status === 'progress' && typeof progress.progress === 'number') {
         self.postMessage({
