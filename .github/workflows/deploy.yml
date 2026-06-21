@@ -30,10 +30,10 @@ jobs:
       - name: build
         env:
           BASE_PATH: '/${{ github.event.repository.name }}/'
-          VITE_APPWRITE_ENDPOINT: ${{ vars.APPWRITE_ENDPOINT }}
-          VITE_APPWRITE_PROJECT_ID: ${{ vars.APPWRITE_PROJECT_ID }}
-          VITE_APPWRITE_DATABASE_ID: ${{ vars.APPWRITE_DATABASE_ID }}
-          VITE_APPWRITE_RESEARCH_COLLECTION_ID: ${{ vars.APPWRITE_RESEARCH_COLLECTION_ID }}
+          VITE_APPWRITE_ENDPOINT: https://sfo.cloud.appwrite.io/v1
+          VITE_APPWRITE_PROJECT_ID: 6a306310002abcd7de99
+          VITE_APPWRITE_DATABASE_ID: 6a375745000a813ade81
+          VITE_APPWRITE_RESEARCH_COLLECTION_ID: speech_submissions
         run: |
           npm run build
 
