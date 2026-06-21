@@ -12,6 +12,8 @@ export interface ResearchSubmissionDocument {
   recordingDurationMs: number
   browserFamily: 'Chrome' | 'Safari' | 'Firefox' | 'Edge' | 'Other'
   submittedAt: string
+  age?: number
+  gender?: string
 }
 
 interface ResearchSubmissionConfig {

@@ -305,6 +305,18 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                       <input id="research-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
                       <span>Share my results for scientific research. No audio, transcript, or identifiers are included.</span>
                     </label>
+                    <fieldset class="mt-3 grid gap-3 border-y border-[#e0e7e3] py-3">
+                      <legend class="sr-only">Optional speaker survey</legend>
+                      <p class="text-[11px] font-semibold text-[#405a56]">Optional speaker survey</p>
+                      <label class="grid gap-1 text-[11px] leading-5 text-[#5f6f6c]">
+                        <span>Speaker age</span>
+                        <input id="research-age" type="number" inputmode="numeric" min="0" max="120" class="rounded-md border border-[#c8d6d1] bg-white px-3 py-2 text-sm text-[#253f3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f5a]" placeholder="Optional">
+                      </label>
+                      <label class="grid gap-1 text-[11px] leading-5 text-[#5f6f6c]">
+                        <span>Speaker gender</span>
+                        <input id="research-gender" type="text" maxlength="80" class="rounded-md border border-[#c8d6d1] bg-white px-3 py-2 text-sm text-[#253f3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f5a]" placeholder="Optional">
+                      </label>
+                    </fieldset>
                     <button id="submit-research" type="button" disabled class="mt-3 w-full rounded-md border border-[#8ca9a2] bg-white px-3 py-2.5 text-xs font-semibold text-[#315f5a] disabled:cursor-not-allowed disabled:opacity-40">Submit result</button>
                     <p id="research-status" class="mt-2 text-[11px] leading-5 text-[#647571]" aria-live="polite">Results are sent only if you opt in.</p>
                   </div>
@@ -379,7 +391,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
     <footer class="border-t border-[#d9ddd6]">
       <div class="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs leading-5 text-[#71807d] sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-        <p>Audio stays on this device. Opted-in research summaries are submitted without audio or transcript.</p>
+        <p>Audio stays on this device. Opted-in research summaries may include optional age and gender survey answers, but never audio or transcript.</p>
         <div class="flex gap-4">
           <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('science.html')}">Method & limitations</a>
           <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('about.html')}">About me</a>
@@ -470,6 +482,8 @@ const shareAppResultButton = getElement<HTMLButtonElement>('share-app-result')
 const shareResultButton = getElement<HTMLButtonElement>('share-result')
 const shareFeedback = getElement('share-feedback')
 const researchConsent = getElement<HTMLInputElement>('research-consent')
+const researchAgeInput = getElement<HTMLInputElement>('research-age')
+const researchGenderInput = getElement<HTMLInputElement>('research-gender')
 const submitResearchButton = getElement<HTMLButtonElement>('submit-research')
 const researchStatus = getElement('research-status')
 
@@ -1120,6 +1134,10 @@ function resetAnalysis(): void {
 function resetResearchSharing(): void {
   researchConsent.checked = false
   researchConsent.disabled = false
+  researchAgeInput.value = ''
+  researchAgeInput.disabled = false
+  researchGenderInput.value = ''
+  researchGenderInput.disabled = false
   submitResearchButton.disabled = true
   submitResearchButton.textContent = 'Submit result'
   researchStatus.textContent = 'Results are sent only if you opt in.'
@@ -1132,6 +1150,9 @@ function disposeModelWorker(): void {
 
 async function submitResearchPreference(): Promise<void> {
   if (!currentResult || !researchConsent.checked) return
+
+  const surveyAnswers = getOptionalResearchSurveyAnswers()
+  if (!surveyAnswers) return
 
   submitResearchButton.disabled = true
   submitResearchButton.textContent = 'Submitting...'
@@ -1149,11 +1170,14 @@ async function submitResearchPreference(): Promise<void> {
     recordingDurationMs: recordedDuration,
     browserFamily: detectBrowserFamily(navigator.userAgent),
     submittedAt: new Date().toISOString(),
+    ...surveyAnswers,
   }
 
   try {
     await submitResearchSubmission(payload)
     researchConsent.disabled = true
+    researchAgeInput.disabled = true
+    researchGenderInput.disabled = true
     submitResearchButton.disabled = true
     submitResearchButton.textContent = 'Submitted'
     researchStatus.textContent = 'Research result submitted. Thank you.'
@@ -1165,6 +1189,28 @@ async function submitResearchPreference(): Promise<void> {
       ? 'Research submission is not configured in this environment.'
       : 'Could not submit. Your recording and result remain local.'
   }
+}
+
+function getOptionalResearchSurveyAnswers(): Pick<Partial<ResearchSubmissionDocument>, 'age' | 'gender'> | null {
+  const ageInput = researchAgeInput.value.trim()
+  const gender = researchGenderInput.value.trim()
+  const answers: Pick<Partial<ResearchSubmissionDocument>, 'age' | 'gender'> = {}
+
+  if (ageInput) {
+    const age = Number(ageInput)
+    if (!Number.isInteger(age) || age < 0 || age > 120) {
+      researchStatus.textContent = 'Enter an age from 0 to 120, or leave age blank.'
+      researchAgeInput.focus()
+      return null
+    }
+    answers.age = age
+  }
+
+  if (gender) {
+    answers.gender = gender
+  }
+
+  return answers
 }
 
 async function shareApp(): Promise<void> {
