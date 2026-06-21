@@ -1,8 +1,14 @@
+import {
+  ResearchSubmissionConfigurationError,
+  submitResearchSubmission,
+  type ResearchSubmissionDocument,
+} from './research-submissions'
 import './style.css'
 
 type RecorderState = 'idle' | 'requesting' | 'calibrating' | 'recording' | 'completed' | 'error' | 'unsupported'
 type AnalysisPanel = 'ready' | 'loading' | 'result' | 'error'
 type ResultBand = 'control-like' | 'mixed' | 'ad-like'
+type BrowserFamily = ResearchSubmissionDocument['browserFamily']
 
 interface PictureScene {
   id: string
@@ -20,24 +26,6 @@ interface AnalysisResult {
   adScore: number
   controlScore: number
   band: ResultBand
-}
-
-interface ResearchSubmissionV1 {
-  schemaVersion: '1.0'
-  consentVersion: '2026-06-15'
-  imageId: string
-  model: {
-    id: 'giyong/wav2vec2-base_ADReSSo'
-    revision: '24e5428d688f83a0f7a2469871c998329f5ef2df'
-  }
-  scores: {
-    control: number
-    ad: number
-  }
-  resultBand: ResultBand
-  recordingDurationMs: number
-  browserFamily: string
-  submittedAt: string
 }
 
 type ModelWorkerMessage =
@@ -312,13 +300,13 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                   <p id="share-feedback" class="mt-2 min-h-4 text-center text-[11px] text-[#647571]" aria-live="polite"></p>
 
                   <div class="mt-4 border-t border-[#d8e1dc] pt-4">
-                    <p class="text-xs font-semibold text-[#405a56]">Research-sharing prototype</p>
+                    <p class="text-xs font-semibold text-[#405a56]">Optional research sharing</p>
                     <label class="mt-2 flex cursor-pointer items-start gap-2.5 border-l-2 border-[#b8c9c4] pl-3 text-[11px] leading-5 text-[#5f6f6c]">
                       <input id="research-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
                       <span>Share my results for scientific research. No audio, transcript, or identifiers are included.</span>
                     </label>
-                    <button id="submit-research" type="button" disabled class="mt-3 w-full rounded-md border border-[#8ca9a2] bg-white px-3 py-2.5 text-xs font-semibold text-[#315f5a] disabled:cursor-not-allowed disabled:opacity-40">Submit preference</button>
-                    <p id="research-status" class="mt-2 text-[11px] leading-5 text-[#647571]" aria-live="polite">Prototype only: submissions are not stored yet.</p>
+                    <button id="submit-research" type="button" disabled class="mt-3 w-full rounded-md border border-[#8ca9a2] bg-white px-3 py-2.5 text-xs font-semibold text-[#315f5a] disabled:cursor-not-allowed disabled:opacity-40">Submit result</button>
+                    <p id="research-status" class="mt-2 text-[11px] leading-5 text-[#647571]" aria-live="polite">Results are sent only if you opt in.</p>
                   </div>
 
                   <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-lg py-2 text-xs font-bold text-[#346c66] hover:bg-[#e8f1ed]">Run analysis again</button>
@@ -391,7 +379,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
     <footer class="border-t border-[#d9ddd6]">
       <div class="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs leading-5 text-[#71807d] sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-        <p>Audio stays on this device. No research submissions are currently stored.</p>
+        <p>Audio stays on this device. Opted-in research summaries are submitted without audio or transcript.</p>
         <div class="flex gap-4">
           <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('science.html')}">Method & limitations</a>
           <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('about.html')}">About me</a>
@@ -1133,8 +1121,8 @@ function resetResearchSharing(): void {
   researchConsent.checked = false
   researchConsent.disabled = false
   submitResearchButton.disabled = true
-  submitResearchButton.textContent = 'Submit preference'
-  researchStatus.textContent = 'Prototype only: submissions are not stored yet.'
+  submitResearchButton.textContent = 'Submit result'
+  researchStatus.textContent = 'Results are sent only if you opt in.'
 }
 
 function disposeModelWorker(): void {
@@ -1145,30 +1133,38 @@ function disposeModelWorker(): void {
 async function submitResearchPreference(): Promise<void> {
   if (!currentResult || !researchConsent.checked) return
 
-  submitResearchButton.textContent = 'Preparing...'
-  const payload: ResearchSubmissionV1 = {
+  submitResearchButton.disabled = true
+  submitResearchButton.textContent = 'Submitting...'
+  researchStatus.textContent = 'Submitting opted-in result summary...'
+
+  const payload: ResearchSubmissionDocument = {
     schemaVersion: '1.0',
     consentVersion: '2026-06-15',
     imageId: getCurrentScene().id,
-    model: {
-      id: 'giyong/wav2vec2-base_ADReSSo',
-      revision: '24e5428d688f83a0f7a2469871c998329f5ef2df',
-    },
-    scores: {
-      control: currentResult.controlScore,
-      ad: currentResult.adScore,
-    },
+    modelId: 'giyong/wav2vec2-base_ADReSSo',
+    modelRevision: '24e5428d688f83a0f7a2469871c998329f5ef2df',
+    controlScore: currentResult.controlScore,
+    adScore: currentResult.adScore,
     resultBand: currentResult.band,
     recordingDurationMs: recordedDuration,
     browserFamily: detectBrowserFamily(navigator.userAgent),
     submittedAt: new Date().toISOString(),
   }
 
-  await Promise.resolve(payload)
-  researchConsent.disabled = true
-  submitResearchButton.disabled = true
-  submitResearchButton.textContent = 'Preference received'
-  researchStatus.textContent = 'Research sharing preference received. Prototype submissions are not stored yet.'
+  try {
+    await submitResearchSubmission(payload)
+    researchConsent.disabled = true
+    submitResearchButton.disabled = true
+    submitResearchButton.textContent = 'Submitted'
+    researchStatus.textContent = 'Research result submitted. Thank you.'
+  } catch (error) {
+    console.error('Research submission failed:', error)
+    submitResearchButton.disabled = !researchConsent.checked
+    submitResearchButton.textContent = 'Submit result'
+    researchStatus.textContent = error instanceof ResearchSubmissionConfigurationError
+      ? 'Research submission is not configured in this environment.'
+      : 'Could not submit. Your recording and result remain local.'
+  }
 }
 
 async function shareApp(): Promise<void> {
@@ -1269,7 +1265,7 @@ function getMicrophoneErrorMessage(error: unknown): string {
   return messages[error.name] ?? 'The microphone could not be started. Check your browser settings and try again.'
 }
 
-function detectBrowserFamily(userAgent: string): string {
+function detectBrowserFamily(userAgent: string): BrowserFamily {
   if (/Edg\//.test(userAgent)) return 'Edge'
   if (/Firefox\//.test(userAgent)) return 'Firefox'
   if (/Chrome\//.test(userAgent)) return 'Chrome'

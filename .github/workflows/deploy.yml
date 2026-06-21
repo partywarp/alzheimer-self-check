@@ -30,6 +30,10 @@ jobs:
       - name: build
         env:
           BASE_PATH: '/${{ github.event.repository.name }}/'
+          VITE_APPWRITE_ENDPOINT: ${{ vars.APPWRITE_ENDPOINT }}
+          VITE_APPWRITE_PROJECT_ID: ${{ vars.APPWRITE_PROJECT_ID }}
+          VITE_APPWRITE_DATABASE_ID: ${{ vars.APPWRITE_DATABASE_ID }}
+          VITE_APPWRITE_RESEARCH_COLLECTION_ID: ${{ vars.APPWRITE_RESEARCH_COLLECTION_ID }}
         run: |
           npm run build
 

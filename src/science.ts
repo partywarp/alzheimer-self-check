@@ -81,7 +81,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <section class="mt-10 border-y border-[#b9c8c4] bg-[#f2f6f4] px-4 py-6">
         <h2 class="text-2xl font-semibold text-[#183738]">Privacy and research sharing</h2>
         <p class="mt-3 max-w-3xl text-sm leading-7 text-[#536563]">
-          Recording and analysis remain local. The optional research-sharing prototype prepares only image ID, model scores, result band, duration, broad browser family, timestamp, and consent version. It excludes audio, transcript, full user agent, and identifiers. No submissions are currently stored.
+          Recording and analysis remain local unless you opt in after viewing a result. Opted-in research sharing sends only image ID, model scores, result band, duration, broad browser family, timestamp, and consent version to Appwrite TablesDB. It excludes audio, transcript, full user agent, name, email, and recording files.
         </p>
       </section>
 
