@@ -1,4 +1,10 @@
-import { env, pipeline } from '@huggingface/transformers'
+import {
+  AudioClassificationPipeline,
+  AutoModelForAudioClassification,
+  AutoProcessor,
+  env,
+  type PretrainedModelOptions,
+} from '@huggingface/transformers'
 
 const appBaseUrl = () =>
   import.meta.env.DEV
@@ -36,17 +42,29 @@ wasmBackend.proxy = false
 let classifierPromise: ReturnType<typeof createClassifier> | null = null
 
 async function createClassifier() {
-  return pipeline('audio-classification', 'adresso-wav2vec2', {
+  const modelPath = 'adresso-wav2vec2'
+  const loadOptions = {
     dtype: 'q8',
     local_files_only: true,
     progress_callback: (progress) => {
-      if (progress.status === 'progress' && typeof progress.progress === 'number') {
+      if (progress.status === 'progress') {
         self.postMessage({
           type: 'progress',
           progress: Math.round(progress.progress),
         })
       }
     },
+  } satisfies PretrainedModelOptions
+
+  const [processor, model] = await Promise.all([
+    AutoProcessor.from_pretrained(modelPath, loadOptions),
+    AutoModelForAudioClassification.from_pretrained(modelPath, loadOptions),
+  ])
+
+  return new AudioClassificationPipeline({
+    task: 'audio-classification',
+    model,
+    processor,
   })
 }
 
