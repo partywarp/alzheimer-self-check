@@ -13,14 +13,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </a>
   <main id="main-content" tabindex="-1" class="min-h-screen bg-[#fafaf8] font-sans text-[#202827] antialiased focus:outline-none">
     <nav class="border-b border-[#d9ddda] bg-white">
-      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <a href="${publicAssetUrl()}" class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
-          <span class="block text-sm font-semibold text-[#253f3d]">Alzheimer's screening helper</span>
-          <span class="block text-xs text-[#697572]">Method & limitations</span>
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4 sm:px-8">
+        <a href="${publicAssetUrl()}" class="min-w-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
+          <span class="block truncate text-sm font-semibold text-[#253f3d]">Alzheimer's helper</span>
+          <span class="hidden text-xs text-[#697572] sm:block">Method</span>
         </a>
-        <div class="flex gap-4 text-sm">
+        <div class="flex shrink-0 gap-3 text-sm">
           <a href="${publicAssetUrl()}" class="font-medium text-[#285f59] underline decoration-[#a8b9b4] underline-offset-4">Exercise</a>
-          <a href="${publicAssetUrl('about.html')}" class="font-medium text-[#285f59] underline decoration-[#a8b9b4] underline-offset-4">About me</a>
+          <a href="${publicAssetUrl('about.html')}" class="font-medium text-[#285f59] underline decoration-[#a8b9b4] underline-offset-4">About</a>
         </div>
       </div>
     </nav>
@@ -54,7 +54,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </section>
       </div>
 
-      <section class="mt-10 border-t border-[#d9ddda] pt-7">
+      <section class="mt-10">
         <h2 class="text-2xl font-semibold text-[#183738]">How to interpret a result</h2>
         <div class="mt-6 grid gap-6 md:grid-cols-2">
           <div>
@@ -70,7 +70,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
       <section class="mt-12">
         <h2 class="text-2xl font-semibold text-[#183738]">Important limitations</h2>
-        <div class="mt-5 divide-y divide-[#d9ddda] border-y border-[#d9ddda]">
+        <div class="mt-5 divide-y divide-[#d9ddda] border-t border-[#d9ddda]">
           <div class="py-4"><h3 class="font-semibold text-[#4c493b]">Not diagnostic</h3><p class="mt-2 text-sm leading-6 text-[#6f6b5e]">Diagnosis requires qualified clinical assessment and may involve history, cognitive testing, examination, imaging, or laboratory work.</p></div>
           <div class="py-4"><h3 class="font-semibold text-[#4c493b]">Different pictures</h3><p class="mt-2 text-sm leading-6 text-[#6f6b5e]">This app rotates original scenes that were not used to train or validate the model. Scores from different pictures are not directly comparable.</p></div>
           <div class="py-4"><h3 class="font-semibold text-[#4c493b]">Many sources of variation</h3><p class="mt-2 text-sm leading-6 text-[#6f6b5e]">Microphone quality, background noise, accent, language, age, speaking style, fatigue, and recording length can change the output.</p></div>

@@ -13,42 +13,42 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </a>
   <main id="main-content" tabindex="-1" class="min-h-screen bg-[#fafaf8] font-sans text-[#202827] antialiased focus:outline-none">
     <nav class="border-b border-[#d9ddda] bg-white">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 sm:px-8">
-        <a href="${publicAssetUrl()}" class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
-          <span class="block text-sm font-semibold text-[#253f3d]">Alzheimer's screening helper</span>
-          <span class="block text-xs text-[#697572]">About me</span>
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4 sm:px-8">
+        <a href="${publicAssetUrl()}" class="min-w-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
+          <span class="block truncate text-sm font-semibold text-[#253f3d]">Alzheimer's helper</span>
+          <span class="hidden text-xs text-[#697572] sm:block">About</span>
         </a>
-        <div class="flex gap-4 text-sm">
+        <div class="flex shrink-0 gap-3 text-sm">
           <a href="${publicAssetUrl('science.html')}" class="font-medium text-[#285f59] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">Method</a>
           <a href="${publicAssetUrl()}" class="font-medium text-[#285f59] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">Exercise</a>
         </div>
       </div>
     </nav>
 
-    <article class="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-12">
-      <header class="max-w-3xl">
-        <p class="text-sm font-medium text-[#44736c]">About me</p>
-        <h1 class="mt-3 text-3xl leading-tight font-semibold tracking-[-0.02em] text-[#203836] sm:text-4xl">
-          David Zhao
-        </h1>
-        <p class="mt-4 text-base leading-7 text-[#596a68]">
-          Student builder interested in AI, machine learning, and practical tools for families navigating Alzheimer's concerns.
-        </p>
-      </header>
+    <article class="mx-auto max-w-none px-0 py-0">
+      <section class="relative min-h-[calc(100svh-4rem)] overflow-hidden">
+        <img
+          src="${publicAssetUrl('IMG_1441.jpg')}"
+          alt="Photo of David"
+          width="4284"
+          height="5712"
+          class="absolute inset-0 h-full w-full object-cover object-center"
+        />
 
-      <section class="mt-10 grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <div class="self-start overflow-hidden rounded-lg border border-[#d9ddda] bg-white p-3">
-          <img
-            src="${publicAssetUrl('IMG_1441.jpg')}"
-            alt="Photo of David"
-            width="4284"
-            height="5712"
-            class="aspect-square w-full rounded-md object-cover object-center"
-          />
-        </div>
+        <header class="absolute left-0 top-0 max-w-3xl px-5 pt-8 text-[#203836] drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)] sm:px-8 sm:pt-10">
+          <p class="text-sm font-semibold uppercase tracking-[0.14em]">About</p>
+          <h1 class="mt-3 text-4xl leading-tight font-semibold tracking-[-0.03em] sm:text-6xl">
+            David Zhao
+          </h1>
+          <p class="mt-4 max-w-xl text-lg leading-7">
+            Student builder interested in AI, machine learning, and practical tools for families navigating Alzheimer's concerns.
+          </p>
+        </header>
+      </section>
 
-        <div class="space-y-8">
-          <section class="border-y border-[#d9ddda] py-5" aria-labelledby="bio-heading">
+      <section class="px-5 py-10 sm:px-8 sm:py-12">
+        <div class="mx-auto max-w-3xl">
+          <section class="py-5" aria-labelledby="bio-heading">
             <h2 id="bio-heading" class="text-xl font-semibold text-[#203836]">Personal blurb</h2>
             <div class="mt-3 space-y-3 text-sm leading-7 text-[#596a68]">
               <p>David is a high-school junior with an interest in AI and machine learning.</p>
@@ -57,11 +57,11 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             </div>
           </section>
 
-          <section class="border-y border-[#d9ddda] py-5" aria-labelledby="contact-heading">
+          <section class="border-t border-[#d9ddda] pt-4 pb-5" aria-labelledby="contact-heading">
             <h2 id="contact-heading" class="text-xl font-semibold text-[#203836]">Contact</h2>
             <p class="mt-3 text-sm leading-7 text-[#596a68]">Use the form below for questions, feedback, or project-related contact.</p>
-            <div class="mt-4 overflow-hidden rounded-lg border border-[#d9ddda] bg-white">
-              <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSc88bQnk9JdoxKrYLVVggMCDb5ylnl7MVJb7K_xX__1hG6J-Q/viewform?embedded=true" width="640" height="1015" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+            <div class="mt-4 max-w-full overflow-hidden">
+              <iframe class="block w-full max-w-full" src="https://docs.google.com/forms/d/e/1FAIpQLSc88bQnk9JdoxKrYLVVggMCDb5ylnl7MVJb7K_xX__1hG6J-Q/viewform?embedded=true" width="640" height="1015" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
             </div>
           </section>
         </div>
