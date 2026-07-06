@@ -15,8 +15,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <nav class="border-b border-[#d9ddda] bg-white">
       <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4 sm:px-8">
         <a href="${publicAssetUrl()}" class="min-w-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
-          <span class="block truncate text-sm font-semibold text-[#253f3d]">Alzheimer's helper</span>
-          <span class="hidden text-xs text-[#697572] sm:block">Method</span>
+          <span class="block truncate text-sm font-semibold text-[#253f3d]"><span class="sm:hidden">Alzheimer's helper</span><span class="hidden sm:inline">Alzheimer's screening helper</span></span>
+          <span class="block text-xs text-[#697572]">alzheimer self check</span>
         </a>
         <div class="flex shrink-0 gap-3 text-sm">
           <a href="${publicAssetUrl()}" class="font-medium text-[#285f59] underline decoration-[#a8b9b4] underline-offset-4">Exercise</a>

@@ -9,7 +9,9 @@ type RecorderState = 'idle' | 'requesting' | 'calibrating' | 'recording' | 'comp
 type AnalysisPanel = 'ready' | 'loading' | 'result' | 'error'
 type ResultBand = 'control-like' | 'mixed' | 'ad-like'
 type BrowserFamily = ResearchSubmissionDocument['browserFamily']
-type FocusLayoutMode = 'noscroll' | 'modal'
+type BrowserWindowWithAudioContext = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext
+}
 
 interface PictureScene {
   id: string
@@ -41,9 +43,7 @@ const appBaseUrl = () =>
     : new URL(import.meta.env.BASE_URL, window.location.origin).href
 
 const publicAssetUrl = (path = '') => new URL(path, appBaseUrl()).href
-const focusLayoutMode: FocusLayoutMode = new URLSearchParams(window.location.search).get('focus') === 'modal'
-  ? 'modal'
-  : 'noscroll'
+const minimumAnalysisDurationMs = 5_000
 
 const scenes: PictureScene[] = [
   {
@@ -89,8 +89,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <nav class="border-b border-[#e2e0d8] bg-[#fbfaf7]/95">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <a href="${publicAssetUrl()}" class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
-          <span class="block text-base font-semibold text-[#253f3d]">Alzheimer's helper</span>
-          <span class="hidden text-sm text-[#697572] sm:block">Private picture-description exercise</span>
+          <span class="block text-base font-semibold text-[#253f3d]"><span class="sm:hidden">Alzheimer's helper</span><span class="hidden sm:inline">Alzheimer's screening helper</span></span>
+          <span class="block text-sm text-[#697572]">alzheimer self check</span>
         </a>
         <div class="flex items-center gap-1">
           <a href="${publicAssetUrl('science.html')}" class="rounded-md px-2 py-2 text-base font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a] sm:px-3">Science</a>
@@ -109,7 +109,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           </h1>
         </div>
         <p class="rounded-md border border-[#dedbd0] bg-white px-3 py-2 text-base leading-6 text-[#665f52] sm:max-w-xs">
-          Not diagnostic. Audio stays on this device unless you download it.
+          Not diagnostic. Audio is never uploaded.
         </p>
       </header>
 
@@ -142,9 +142,12 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <section id="workspace" class="mt-4 grid items-start gap-3 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)] lg:gap-6">
         <div id="scene-panel" class="min-w-0 max-h-225 translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none">
           <div class="overflow-hidden rounded-md border border-[#d8d5ca] bg-white shadow-sm">
-            <div class="border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3">
-              <div class="min-w-0">
+            <div id="scene-label-row" class="border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3">
+              <div class="flex min-w-0 flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
                 <h2 id="scene-title" class="truncate text-lg font-semibold text-[#293f3d]">Busy kitchen</h2>
+                <p id="scene-hud" class="hidden items-center gap-2 text-base font-semibold text-[#315f5a] md:inline-flex" aria-live="polite">
+                  <span id="scene-hud-indicator"></span><span id="scene-hud-duration" class="hidden rounded-full bg-[#edf5f2] px-2 py-0.5 font-mono text-[#183738]"></span><span id="scene-hud-detail" class="text-[#5d6c69]"></span>
+                </p>
               </div>
             </div>
             <div class="w-full bg-[#f8f7f2]">
@@ -180,25 +183,25 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
               <p class="mt-1 max-w-xs text-base leading-6 text-[#6b7977]">Quick microphone warm-up first.</p>
             </div>
 
-            <div id="requesting-panel" class="hidden flex-col items-center py-4 text-center sm:py-6">
+            <div id="requesting-panel" class="hidden flex-col items-center py-4 text-center sm:py-6 md:absolute md:inset-0 md:pointer-events-none md:justify-start md:py-0">
               <div class="hidden size-16 animate-pulse place-items-center rounded-full bg-[#e4efeb] text-[#286a63] sm:size-20">
                 <svg class="size-7 sm:size-8" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </div>
               <p class="text-base font-bold text-[#244443] sm:text-lg">Allow microphone access</p>
               <p class="mt-1 max-w-xs text-base leading-6 text-[#6b7977]">Use the browser permission prompt.</p>
-              <div id="permission-help" class="mt-4 hidden max-w-xs border-y border-[#d8e1dc] py-3 text-base leading-6 text-[#667572]">
+              <div id="permission-help" class="mt-4 hidden max-w-xs border-y border-[#d8e1dc] py-3 text-base leading-6 text-[#667572] md:pointer-events-auto md:border md:bg-white/95 md:px-3 md:shadow-sm">
                 <p class="font-semibold text-[#405a56]">Still waiting for the browser.</p>
                 <p class="mt-1">Check the address bar microphone icon or site settings, then try again.</p>
               </div>
-              <button id="cancel-permission" type="button" class="mt-4 rounded-md px-4 py-2 text-base font-bold text-[#657572] hover:bg-[#f0f4f1]">Cancel and try again</button>
+              <button id="cancel-permission" type="button" class="mt-4 rounded-md px-4 py-2 text-base font-bold text-[#657572] hover:bg-[#f0f4f1] md:pointer-events-auto md:bg-white/95">Cancel and try again</button>
             </div>
 
-            <div id="calibrating-panel" class="hidden flex-col items-center text-center">
+            <div id="calibrating-panel" class="hidden flex-col items-center text-center md:absolute md:inset-0 md:pointer-events-none">
               <span class="hidden size-14 place-items-center rounded-full bg-[#e4efeb] text-[#286a63] sm:size-16">
                 <svg class="size-6 sm:size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </span>
-              <p class="text-base font-medium text-[#4c766f]">Quick warm-up</p>
-              <p class="mt-1 text-2xl font-semibold text-[#183738] sm:text-3xl">Say "Hello."</p>
+              <p class="text-base font-medium text-[#4c766f] md:hidden">Quick warm-up</p>
+              <p id="hello-prompt" class="mt-1 text-2xl font-semibold text-[#183738] opacity-40 transition-opacity duration-100 sm:text-3xl md:hidden">Say "Hello."</p>
               <div class="hidden h-8 items-center gap-1.5 text-[#4d8c82] sm:h-9" aria-hidden="true">
                 <span class="h-3 w-1.5 animate-pulse rounded-full bg-current"></span>
                 <span class="h-7 w-1.5 animate-pulse rounded-full bg-current"></span>
@@ -209,61 +212,62 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                 <span class="h-8 w-1.5 animate-pulse rounded-full bg-current"></span>
                 <span class="h-3 w-1.5 animate-pulse rounded-full bg-current"></span>
               </div>
-              <p class="mt-2 max-w-xs text-base leading-6 text-[#6b7977]">Warm-up is not recorded.</p>
-              <button id="begin-recording" type="button" class="mt-4 inline-flex w-full items-center justify-center rounded-md bg-[#216869] px-5 py-3.5 text-base font-bold text-white hover:bg-[#195d58] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#216869] sm:mt-6">Start description</button>
-              <button id="cancel-calibration" type="button" class="mt-2 rounded-md px-4 py-2 text-base font-bold text-[#657572] hover:bg-[#f0f4f1]">Cancel</button>
+              <p class="mt-2 max-w-xs text-base leading-6 text-[#6b7977] md:hidden">Warm-up is not recorded.</p>
+              <button id="begin-recording" type="button" aria-label="Start description" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#216869] px-5 py-3.5 text-base font-bold text-white hover:bg-[#195d58] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#216869] sm:mt-6 md:pointer-events-auto md:absolute md:bottom-8 md:left-1/2 md:mt-0 md:flex md:h-16 md:min-h-16 md:w-16 md:min-w-16 md:-translate-x-1/2 md:items-center md:justify-center md:rounded-full md:p-0 md:shadow-lg lg:h-20 lg:min-h-20 lg:w-20 lg:min-w-20">
+                <svg class="hidden size-7 md:block lg:size-8" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span class="md:sr-only">Start description</span>
+              </button>
+              <button id="cancel-calibration" type="button" class="mt-2 rounded-md px-4 py-2 text-base font-bold text-[#657572] hover:bg-[#f0f4f1] md:hidden">Cancel</button>
             </div>
 
-            <div id="recording-panel" class="hidden flex-col items-center text-center">
-              <div class="flex items-center gap-2 text-base font-semibold text-[#a53b2f]">
+            <div id="recording-panel" class="hidden flex-col items-center text-center md:absolute md:inset-0 md:pointer-events-none">
+              <div class="flex items-center gap-2 text-base font-semibold text-[#a53b2f] md:hidden">
                 <span class="size-2 animate-pulse rounded-full bg-[#c6493b]"></span>Recording
               </div>
-              <div id="recording-timer" class="mt-3 font-mono text-4xl font-semibold tracking-[-0.04em] text-[#183738] sm:mt-5 sm:text-5xl" aria-label="Recording duration">00:00</div>
-              <div class="mt-2 flex items-center gap-2 rounded-full bg-[#edf5f2] px-3 py-1.5 text-base font-bold text-[#3f716a] sm:mt-3">
+              <div id="recording-timer" class="mt-3 font-mono text-4xl font-semibold tracking-[-0.04em] text-[#183738] sm:mt-5 sm:text-5xl md:hidden" aria-label="Recording duration">00:00</div>
+              <div class="mt-2 flex items-center gap-2 rounded-full bg-[#edf5f2] px-3 py-1.5 text-base font-bold text-[#3f716a] sm:mt-3 md:hidden">
                 <svg class="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                 Recommended: 30-60 sec
               </div>
-              <p class="mt-4 text-base font-bold text-[#284746] sm:mt-5">Describe everything happening.</p>
-              <p id="recording-guidance" class="mt-1 text-base leading-6 text-[#6b7977]" aria-live="polite">Start with the main action, then add details.</p>
-              <button id="stop-recording" type="button" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#a43e33] px-5 py-3.5 text-base font-bold text-white hover:bg-[#8f332a] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#a43e33] disabled:cursor-wait disabled:opacity-60 sm:mt-7">
-                <span class="size-3 rounded-sm bg-white" aria-hidden="true"></span>Stop recording
+              <p class="mt-4 text-base font-bold text-[#284746] sm:mt-5 md:hidden">Describe everything happening.</p>
+              <p id="recording-guidance" class="mt-1 text-base leading-6 text-[#6b7977] md:hidden" aria-live="polite">Start with the main action, then add details.</p>
+              <button id="stop-recording" type="button" aria-label="Stop recording" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#a43e33] px-5 py-3.5 text-base font-bold text-white hover:bg-[#8f332a] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#a43e33] disabled:cursor-wait disabled:opacity-60 sm:mt-7 md:pointer-events-auto md:absolute md:bottom-8 md:left-1/2 md:mt-0 md:flex md:h-16 md:min-h-16 md:w-16 md:min-w-16 md:-translate-x-1/2 md:items-center md:justify-center md:rounded-full md:p-0 md:shadow-lg lg:h-20 lg:min-h-20 lg:w-20 lg:min-w-20">
+                <span class="size-3 rounded-sm bg-white lg:size-4" aria-hidden="true"></span><span id="stop-recording-label" class="md:sr-only">Stop recording</span>
               </button>
             </div>
 
-            <div id="completed-panel" class="hidden flex-col">
-              <div class="flex items-center gap-3">
-                <span class="grid size-10 shrink-0 place-items-center rounded-full bg-[#dff0e9] text-[#267064] sm:size-11">
-                  <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-                </span>
-                <div>
-                  <p class="font-bold text-[#244443]">Recording complete</p>
-                  <p id="completed-duration" class="mt-0.5 text-base text-[#6b7977]">Duration: 00:00</p>
+            <div id="completed-panel" class="hidden flex-col gap-4">
+              <section class="rounded-md bg-[#f8faf7] p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="text-lg font-bold text-[#244443]">Review your recording</p>
+                    <p class="mt-1 text-base leading-6 text-[#667572]">Play it back before optional analysis.</p>
+                  </div>
+                  <p id="completed-duration" class="hidden">00:00</p>
                 </div>
-              </div>
-              <div class="mt-4 border-y border-[#dce3df] py-3 sm:mt-5">
-                <audio id="recording-playback" class="w-full" controls preload="metadata"></audio>
-              </div>
+                <audio id="recording-playback" class="mt-4 w-full" controls preload="metadata"></audio>
+              </section>
 
-              <div class="mt-4 border-t border-[#d6dfda] pt-4 sm:mt-5">
+              <section class="rounded-md bg-[#f8faf7] p-4">
                 <div id="analysis-ready">
-                  <p class="text-base font-semibold text-[#244443]">Run the experimental model?</p>
-                  <p class="mt-1 text-base leading-6 text-[#667572]">Optional. 91 MB model runs locally.</p>
-                  <label class="mt-3 flex cursor-pointer items-start gap-2.5 border-l-2 border-[#b8c9c4] pl-3 text-base leading-6 text-[#5f6f6c] sm:mt-4">
+                  <p class="text-lg font-bold text-[#244443]">Experimental analysis</p>
+                  <p class="mt-1 text-base leading-6 text-[#667572]">Compares this recording with research speech groups. Not diagnostic.</p>
+                  <label class="mt-3 flex cursor-pointer items-start gap-2.5 rounded-md bg-white/80 p-3 text-base leading-6 text-[#5f6f6c]">
                     <input id="analysis-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
-                    <span>I understand this experimental model cannot detect or diagnose Alzheimer's disease.</span>
+                    <span>I understand this is not a diagnosis.</span>
                   </label>
-                  <button id="analyze-recording" type="button" disabled class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#315f5a] px-4 py-3 text-base font-semibold text-white hover:bg-[#264f4b] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#216869] disabled:cursor-not-allowed disabled:opacity-40 sm:mt-4">
+                  <p id="short-analysis-warning" class="mt-3 hidden rounded-md border border-[#e4c474] bg-[#fff8e6] px-3 py-2 text-base leading-6 text-[#6f5524]" role="alert">
+                    This recording is under 5 seconds. Short clips give the model less speech to compare, so the result may be less stable. Press Run analysis again to continue anyway.
+                  </p>
+                  <button id="analyze-recording" type="button" disabled class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#315f5a] px-4 py-3 text-base font-semibold text-white hover:bg-[#264f4b] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#216869] disabled:cursor-not-allowed disabled:opacity-40">
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h3l1.5-5 3 10 2.7-13 2.5 11 1.3-5 1 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                    Run on-device analysis
+                    <span id="analyze-recording-label">Run analysis</span>
                   </button>
-                  <p class="mt-2 text-center text-base leading-6 text-[#7b8784]">30-60 seconds is best.</p>
+                  <p id="analysis-availability-note" class="mt-2 text-center text-base leading-6 text-[#7b8784]">30-60 seconds is best.</p>
                 </div>
 
                 <div id="analysis-loading" class="hidden py-3 text-center" role="status" aria-live="polite">
-                  <span class="mx-auto grid size-10 animate-pulse place-items-center rounded-full bg-[#dfece7] text-[#286a63] sm:size-11">
-                    <svg class="size-5 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  </span>
-                  <p id="analysis-loading-title" class="mt-3 text-base font-bold text-[#244443]">Preparing your recording...</p>
+                  <p id="analysis-loading-title" class="text-base font-bold text-[#244443]">Preparing your recording...</p>
                   <p id="analysis-loading-detail" class="mt-1 text-base text-[#697875]">Audio remains on this device</p>
                   <div class="mt-4 h-2 overflow-hidden rounded-full bg-[#dce5e1]" role="progressbar" aria-label="Analysis progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="analysis-progressbar">
                     <div id="analysis-progress" class="h-full rounded-full bg-[#397a72] transition-[width] duration-300 motion-reduce:transition-none" style="width: 0%"></div>
@@ -272,24 +276,23 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                 </div>
 
                 <div id="analysis-result" class="hidden">
-                  <div id="result-graphic" class="mb-3 overflow-hidden rounded-md border border-[#e2ded2] bg-[#f8f7f3] p-3 text-[#847447]" aria-hidden="true"></div>
-                  <p class="text-base font-medium text-[#6e795e]">Experimental class comparison</p>
+                  <div id="result-graphic" class="mb-3 overflow-hidden rounded-md bg-white/80 p-3 text-[#847447]" aria-hidden="true"></div>
+                  <p class="text-base font-medium text-[#6e795e]">Experimental comparison</p>
                   <p id="analysis-result-title" class="mt-1 text-lg font-bold text-[#3e493f]">No clear class match</p>
                   <div class="mt-3 space-y-3">
                     <div>
-                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-[#63716e]"><span>Research control class</span><span id="control-score">0%</span></div>
+                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-[#63716e]"><span>Control comparison</span><span id="control-score">0%</span></div>
                       <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="control-bar" class="h-full rounded-full bg-[#5b8c83] transition-[width] duration-500" style="width: 0%"></div></div>
                     </div>
                     <div>
-                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-[#63716e]"><span>Alzheimer's research class</span><span id="ad-score">0%</span></div>
+                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-[#63716e]"><span>Alzheimer's research comparison</span><span id="ad-score">0%</span></div>
                       <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="ad-bar" class="h-full rounded-full bg-[#a77d58] transition-[width] duration-500" style="width: 0%"></div></div>
                     </div>
                   </div>
-                  <div class="mt-4 border-l-2 border-[#b8c9c4] pl-3">
-                    <p class="text-base font-bold text-[#4f5f5b]">What does a control-like score mean?</p>
-                    <p class="mt-1 text-base leading-6 text-[#697572]">Higher control score means closer to this model's research group without dementia. No validated "typical healthy" range is published.</p>
+                  <div class="mt-4 rounded-md bg-white/80 p-3">
+                    <p class="text-base font-bold text-[#4f5f5b]">How to read this</p>
+                    <p class="mt-1 text-base leading-6 text-[#697572]">Percentages are research similarity outputs, not chance of disease or diagnosis. No validated typical healthy range is published.</p>
                   </div>
-                  <p class="mt-4 border-y border-[#e2ded2] py-3 text-base leading-6 text-[#756443]">Percentages are class similarity outputs, not chance of disease or diagnosis.</p>
 
                   <div class="mt-4 grid grid-cols-2 gap-2">
                     <button id="share-result" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-2.5 text-base font-semibold text-[#346c66] hover:bg-[#f3f6f5]">Share result</button>
@@ -297,13 +300,13 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                   </div>
                   <p id="share-feedback" class="mt-2 min-h-4 text-center text-base text-[#647571]" aria-live="polite"></p>
 
-                  <details id="research-sharing" class="mt-3 rounded-md border border-[#d8e1dc] bg-[#fbfdfb] px-3 py-3">
-                    <summary class="cursor-pointer text-base font-semibold text-[#405a56]">Optional research sharing</summary>
-                    <label class="mt-3 flex cursor-pointer items-start gap-2.5 border-l-2 border-[#b8c9c4] pl-3 text-base leading-6 text-[#5f6f6c]">
+                  <details id="research-sharing" class="mt-3 rounded-md bg-white/80 px-3 py-3">
+                    <summary class="cursor-pointer text-base font-semibold text-[#405a56]">Help improve this project</summary>
+                    <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-base leading-6 text-[#5f6f6c]">
                       <input id="research-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
-                      <span>Share my results for scientific research. No audio, transcript, or identifiers are included.</span>
+                      <span>Share my result for research. No audio, transcript, or identifiers are included.</span>
                     </label>
-                    <fieldset class="mt-3 grid gap-3 border-y border-[#e0e7e3] py-3 sm:grid-cols-2">
+                    <fieldset class="mt-3 grid gap-3 sm:grid-cols-2">
                       <legend class="sr-only">Optional speaker survey</legend>
                       <label class="grid gap-1 text-base leading-6 text-[#5f6f6c]">
                         <span>Speaker age</span>
@@ -318,24 +321,23 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
                     <p id="research-status" class="mt-2 text-base leading-6 text-[#647571]" aria-live="polite">Results are sent only if you opt in.</p>
                   </details>
 
-                  <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-md py-2 text-base font-bold text-[#346c66] hover:bg-[#e8f1ed]">Run analysis again</button>
+                  <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-md py-2 text-base font-semibold text-[#346c66] hover:bg-white/70">Run analysis again</button>
                 </div>
 
                 <div id="analysis-error" class="hidden py-2 text-center">
                   <p class="text-base font-bold text-[#774b45]">Analysis unavailable</p>
                   <p id="analysis-error-message" class="mt-1 text-base leading-6 text-[#796965]">The model could not process this recording.</p>
-                  <button id="retry-analysis" type="button" class="mt-3 rounded-md px-4 py-2 text-base font-bold text-[#346c66] hover:bg-[#e8f1ed]">Try again</button>
+                  <button id="retry-analysis" type="button" class="mt-3 rounded-md px-4 py-2 text-base font-bold text-[#346c66] hover:bg-white/70">Try again</button>
                 </div>
-              </div>
+              </section>
 
-              <a id="download-recording" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#315f5a] px-5 py-3 text-base font-semibold text-white hover:bg-[#264f4b]" href="#">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                Download recording
-              </a>
-              <div class="mt-3 grid grid-cols-2 gap-3">
-                <button id="try-another-picture" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-3 text-base font-semibold text-[#275d58] hover:bg-[#f3f6f5]">Try another picture</button>
-                <button id="delete-recording" type="button" class="rounded-md border border-[#e0d8d3] bg-white px-3 py-3 text-base font-semibold text-[#80534d] hover:bg-[#fbf4f2]">Delete</button>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <button id="try-another-picture" type="button" class="rounded-md bg-[#315f5a] px-3 py-3 text-base font-semibold text-white hover:bg-[#264f4b]">Try another picture</button>
+                <a id="download-recording" class="inline-flex items-center justify-center gap-2 rounded-md border border-[#bdd0ca] bg-white px-3 py-3 text-base font-semibold text-[#346c66] hover:bg-[#f3f6f5]" href="#">
+                  Download audio
+                </a>
               </div>
+              <button id="delete-recording" type="button" class="self-start rounded-md px-2 py-2 text-base font-semibold text-[#80534d] underline underline-offset-4 hover:bg-[#fbf4f2]">Delete recording</button>
             </div>
 
             <div id="error-panel" class="hidden flex-col items-center py-4 text-center">
@@ -359,7 +361,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
               Microphone inactive
             </div>
           </div>
-          <button id="focus-limitations" type="button" class="hidden">Not diagnostic</button>
         </aside>
       </section>
 
@@ -389,17 +390,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </div>
     </div>
 
-    <dialog id="limitations-dialog" aria-labelledby="limitations-dialog-title" class="m-0 mt-auto w-full max-w-none bg-transparent p-3 text-[#202827] backdrop:bg-black/30 sm:mx-auto sm:mb-6 sm:max-w-xl">
-      <div class="rounded-md border border-[#d8d5ca] bg-white p-4 shadow-2xl">
-        <div class="flex items-start justify-between gap-4">
-          <h2 id="limitations-dialog-title" class="text-lg font-semibold text-[#4c493b]">Not a medical test</h2>
-          <button id="close-limitations" type="button" class="rounded-md px-3 py-1.5 text-base font-semibold text-[#315f5a] hover:bg-[#eef5f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f5a]">Close</button>
-        </div>
-        <p class="mt-3 text-base leading-7 text-[#6f6b5e]">This exercise can help families organize observations. It cannot diagnose Alzheimer's disease, dementia, mild cognitive impairment, or any condition.</p>
-        <a class="mt-4 inline-flex font-semibold text-[#526f68] underline underline-offset-4" href="${publicAssetUrl('science.html')}">Read method and limitations</a>
-      </div>
-    </dialog>
-
     <footer class="border-t border-[#d9ddd6]">
       <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-base leading-6 text-[#71807d] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <p>Audio stays on this device. Opted-in research summaries may include optional age and gender survey answers, but never audio or transcript.</p>
@@ -427,6 +417,12 @@ let permissionHelpTimer: number | undefined
 let permissionTimeoutTimer: number | undefined
 let microphoneRequestId = 0
 let recorderFailed = false
+let shortAnalysisWarningShown = false
+let microphoneAudioContext: AudioContext | null = null
+let microphoneAnalyser: AnalyserNode | null = null
+let microphoneSource: MediaStreamAudioSourceNode | null = null
+let microphoneVolumeFrame: number | undefined
+let microphoneDisplayedLevel = 0
 let modelWorker: Worker | null = null
 let analysisInProgress = false
 let analysisProgressValue = 0
@@ -451,10 +447,12 @@ const exercisePanel = getElement('exercise-panel')
 const exerciseHeading = getElement('exercise-heading')
 const exerciseBody = getElement('exercise-body')
 const exerciseFooter = getElement('exercise-footer')
-const focusLimitationsButton = getElement<HTMLButtonElement>('focus-limitations')
-const limitationsDialog = getElement<HTMLDialogElement>('limitations-dialog')
-const closeLimitationsButton = getElement<HTMLButtonElement>('close-limitations')
+const sceneLabelRow = getElement('scene-label-row')
 const sceneTitle = getElement('scene-title')
+const sceneHud = getElement('scene-hud')
+const sceneHudIndicator = getElement('scene-hud-indicator')
+const sceneHudDuration = getElement('scene-hud-duration')
+const sceneHudDetail = getElement('scene-hud-detail')
 const sceneImage = getElement<HTMLImageElement>('scene-image')
 const panelStep = getElement('panel-step')
 const panelTitle = getElement('panel-title')
@@ -464,7 +462,9 @@ const beginRecordingButton = getElement<HTMLButtonElement>('begin-recording')
 const cancelPermissionButton = getElement<HTMLButtonElement>('cancel-permission')
 const cancelCalibrationButton = getElement<HTMLButtonElement>('cancel-calibration')
 const permissionHelp = getElement('permission-help')
+const helloPrompt = getElement('hello-prompt')
 const stopButton = getElement<HTMLButtonElement>('stop-recording')
+const stopButtonLabel = getElement('stop-recording-label')
 const retryButton = getElement<HTMLButtonElement>('retry-recording')
 const tryAnotherPictureButton = getElement<HTMLButtonElement>('try-another-picture')
 const deleteButton = getElement<HTMLButtonElement>('delete-recording')
@@ -477,9 +477,12 @@ const audioElement = getElement<HTMLAudioElement>('recording-playback')
 const downloadLink = getElement<HTMLAnchorElement>('download-recording')
 const analysisConsent = getElement<HTMLInputElement>('analysis-consent')
 const analyzeButton = getElement<HTMLButtonElement>('analyze-recording')
+const analyzeButtonLabel = getElement('analyze-recording-label')
 const reanalyzeButton = getElement<HTMLButtonElement>('reanalyze-recording')
 const retryAnalysisButton = getElement<HTMLButtonElement>('retry-analysis')
 const analysisReady = getElement('analysis-ready')
+const analysisAvailabilityNote = getElement('analysis-availability-note')
+const shortAnalysisWarning = getElement('short-analysis-warning')
 const analysisLoading = getElement('analysis-loading')
 const analysisResult = getElement('analysis-result')
 const analysisError = getElement('analysis-error')
@@ -509,11 +512,6 @@ const researchStatus = getElement('research-status')
 renderCurrentScene()
 setState(currentState)
 
-focusLimitationsButton.addEventListener('click', openLimitationsDialog)
-closeLimitationsButton.addEventListener('click', closeLimitationsDialog)
-limitationsDialog.addEventListener('click', (event) => {
-  if (event.target === limitationsDialog) closeLimitationsDialog()
-})
 startCalibrationButton.addEventListener('click', startCalibration)
 beginRecordingButton.addEventListener('click', beginRecording)
 cancelPermissionButton.addEventListener('click', cancelCalibration)
@@ -523,7 +521,7 @@ retryButton.addEventListener('click', startCalibration)
 tryAnotherPictureButton.addEventListener('click', showNextPicture)
 deleteButton.addEventListener('click', deleteRecording)
 analysisConsent.addEventListener('change', () => {
-  analyzeButton.disabled = !analysisConsent.checked
+  updateAnalyzeButtonState()
 })
 analyzeButton.addEventListener('click', analyzeRecording)
 reanalyzeButton.addEventListener('click', analyzeRecording)
@@ -556,6 +554,7 @@ function setState(nextState: RecorderState, errorMessage?: string): void {
   renderStepIndicator(activeStep)
   renderPanelHeading(activeStep)
   renderLayoutForState(nextState)
+  renderSceneHud(nextState)
 
   const statuses: Record<RecorderState, string> = {
     idle: 'Microphone inactive',
@@ -604,7 +603,7 @@ function renderStepIndicator(activeStep: 1 | 2 | 3): void {
     }`
 
     if (badge) {
-      badge.textContent = isComplete ? '✓' : String(step)
+      badge.textContent = isComplete ? '✓' : `${step}`
       badge.className = `step-badge grid size-7 shrink-0 place-items-center rounded-full text-sm font-bold transition-all duration-500 motion-reduce:transition-none ${
         isActive
           ? 'scale-105 bg-[#315f5a] text-white ring-2 ring-[#dbe9e4]'
@@ -631,62 +630,71 @@ function renderPanelHeading(activeStep: 1 | 2 | 3): void {
 function renderLayoutForState(state: RecorderState): void {
   const isReviewing = state === 'completed'
   const isPictureFocus = isPictureFocusState(state)
-  const isModalFocus = isPictureFocus && focusLayoutMode === 'modal'
 
   workspace.className = isReviewing
     ? 'mt-4 grid items-start gap-0 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-6 lg:grid-cols-[minmax(0,0fr)_minmax(0,1fr)]'
     : isPictureFocus
-      ? 'mt-2 grid items-start gap-2 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-3'
+      ? 'relative mt-2 grid items-start gap-2 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-3 md:gap-3'
       : 'mt-4 grid items-start gap-3 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)] lg:gap-6'
   scenePanel.className = isReviewing
     ? 'pointer-events-none min-w-0 max-h-0 -translate-y-3 overflow-hidden opacity-0 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
     : 'min-w-0 max-h-[1200px] translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
   sceneImage.className = isPictureFocus
-    ? 'h-auto max-h-none w-full object-cover'
+    ? 'h-auto max-h-none w-full object-contain md:max-h-[calc(100svh-10rem)]'
     : 'h-auto w-full object-cover'
+  sceneLabelRow.className = isPictureFocus
+    ? 'border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3 md:bg-[#f8faf7]'
+    : 'border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3'
   exercisePanel.className = isReviewing
     ? 'min-w-0 w-full max-w-3xl justify-self-center overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none'
     : isPictureFocus
-      ? 'mx-auto w-full max-w-xl overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width,transform] duration-500 motion-reduce:transition-none sm:max-w-2xl'
+      ? 'mx-auto w-full max-w-xl overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width,transform] duration-500 motion-reduce:transition-none sm:max-w-2xl md:absolute md:inset-0 md:z-30 md:mx-0 md:max-w-none md:overflow-visible md:border-0 md:bg-transparent md:shadow-none'
       : 'min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none'
   exerciseHeading.className = isPictureFocus
     ? 'sr-only'
     : 'border-b border-[#e0e5e1] px-4 py-3 sm:px-6 sm:py-5'
   exerciseBody.className = isPictureFocus
-    ? 'px-3 py-2 sm:px-4 sm:py-3'
+    ? 'px-3 py-2 sm:px-4 sm:py-3 md:contents'
     : 'px-4 py-4 sm:px-6 sm:py-6'
   exerciseFooter.className = isPictureFocus
     ? 'hidden'
     : 'border-t border-[#e0e5e1] bg-[#f8faf8] px-4 py-3 sm:px-6 sm:py-4'
-  belowExerciseContent.className = isModalFocus ? 'hidden' : ''
-  focusLimitationsButton.className = isModalFocus
-    ? 'block w-full border-t border-[#e0e5e1] px-3 py-2 text-left text-base font-semibold text-[#526f68] underline underline-offset-4 hover:bg-[#f8faf8] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#315f5a]'
-    : 'hidden'
-  if (!isModalFocus && limitationsDialog.open) limitationsDialog.close()
+  belowExerciseContent.className = ''
 }
 
 function isPictureFocusState(state: RecorderState): boolean {
   return state === 'requesting' || state === 'calibrating' || state === 'recording'
 }
 
-function scrollToFocusPosition(): void {
-  if (focusLayoutMode === 'modal') {
-    scenePanel.scrollIntoView({ block: 'start', behavior: 'smooth' })
+function renderSceneHud(state: RecorderState): void {
+  sceneHud.classList.toggle('hidden', !isPictureFocusState(state))
+  if (state === 'requesting') {
+    setSceneHudText('Allow microphone access', '', '')
     return
   }
+  if (state === 'calibrating') {
+    setSceneHudText('Say "Hello."', '', 'Warm-up is not recorded. Next: describe everything happening.')
+    return
+  }
+  if (state === 'recording') {
+    setSceneHudText('Recording', formatDuration(recordedDuration), 'Describe everything happening. 30-60 sec is best.')
+    return
+  }
+  setSceneHudText('', '', '')
+}
 
+function setSceneHudText(indicator: string, duration: string, detail: string): void {
+  sceneHudIndicator.textContent = indicator
+  sceneHudDuration.textContent = duration
+  sceneHudDuration.classList.toggle('hidden', !duration)
+  sceneHudDetail.textContent = detail
+  sceneHudIndicator.style.opacity = ''
+}
+
+function scrollToFocusPosition(): void {
   const top = scenePanel.getBoundingClientRect().top + window.scrollY
   const offset = Math.min(240, Math.round(window.innerHeight * 0.35))
   window.scrollTo({ top: Math.max(0, top - offset), behavior: 'smooth' })
-}
-
-function openLimitationsDialog(): void {
-  if (!limitationsDialog.open) limitationsDialog.showModal()
-  closeLimitationsButton.focus()
-}
-
-function closeLimitationsDialog(): void {
-  if (limitationsDialog.open) limitationsDialog.close()
 }
 
 function renderCurrentScene(): void {
@@ -772,6 +780,7 @@ async function startCalibration(): Promise<void> {
     permissionHelp.classList.add('hidden')
     mediaStream = stream
     setState('calibrating')
+    startMicrophoneVolumeMeter(stream)
   } catch (error) {
     if (requestId !== microphoneRequestId) return
 
@@ -782,15 +791,17 @@ async function startCalibration(): Promise<void> {
   }
 }
 
-function beginRecording(): void {
+async function beginRecording(): Promise<void> {
   if (!mediaStream || currentState !== 'calibrating') return
 
+  beginRecordingButton.disabled = true
   try {
     clearMicrophoneRequestTimers()
     const mimeType = chooseMimeType()
     mediaRecorder = mimeType ? new MediaRecorder(mediaStream, { mimeType }) : new MediaRecorder(mediaStream)
     audioChunks = []
     recorderFailed = false
+    stopButtonLabel.textContent = 'Stop recording'
 
     mediaRecorder.addEventListener('dataavailable', (event) => {
       if (event.data.size > 0) audioChunks.push(event.data)
@@ -802,16 +813,22 @@ function beginRecording(): void {
       setState('error', 'The browser could not continue recording. Check your microphone and try again.')
     }, { once: true })
     mediaRecorder.addEventListener('stop', finalizeRecording, { once: true })
+    setState('recording')
+    window.requestAnimationFrame(() => {
+      void playRecordingStartCue()
+    })
+    stopMicrophoneVolumeMeter()
     mediaRecorder.start(250)
 
     recordingStartedAt = Date.now()
     recordedDuration = 0
     updateTimer()
     timerId = window.setInterval(updateTimer, 250)
-    setState('recording')
   } catch {
     releaseMicrophone()
     setState('error', 'The browser could not start audio capture. Check your microphone and try again.')
+  } finally {
+    beginRecordingButton.disabled = false
   }
 }
 
@@ -824,10 +841,13 @@ function cancelCalibration(): void {
 function stopRecording(): void {
   if (!mediaRecorder || mediaRecorder.state !== 'recording') return
 
-  stopButton.disabled = true
   recordedDuration = Date.now() - recordingStartedAt
+  stopButton.disabled = true
   stopTimer()
   mediaRecorder.stop()
+  window.requestAnimationFrame(() => {
+    void playRecordingStopCue()
+  })
 }
 
 function finalizeRecording(): void {
@@ -847,7 +867,8 @@ function finalizeRecording(): void {
   audioElement.src = audioUrl
   downloadLink.href = audioUrl
   downloadLink.download = `picture-description-${formatDownloadTimestamp()}.${getFileExtension(mimeType)}`
-  durationElement.textContent = `Duration: ${formatDuration(recordedDuration)}`
+  durationElement.textContent = formatDuration(recordedDuration)
+  updateAnalysisAvailability()
   mediaRecorder = null
   audioChunks = []
   setState('completed')
@@ -881,6 +902,7 @@ function updateTimer(): void {
   recordedDuration = Date.now() - recordingStartedAt
   timerElement.textContent = formatDuration(recordedDuration)
   recordingGuidance.textContent = getRecordingGuidance(Math.floor(recordedDuration / 1000))
+  if (currentState === 'recording') renderSceneHud('recording')
 }
 
 function stopTimer(): void {
@@ -932,8 +954,132 @@ function clearMicrophoneRequestTimers(): void {
 }
 
 function releaseMicrophone(): void {
+  stopMicrophoneVolumeMeter()
   mediaStream?.getTracks().forEach((track) => track.stop())
   mediaStream = null
+}
+
+function startMicrophoneVolumeMeter(stream: MediaStream): void {
+  stopMicrophoneVolumeMeter()
+  const AudioContextConstructor = getAudioContextConstructor()
+  if (!AudioContextConstructor) return
+
+  try {
+    microphoneAudioContext = new AudioContextConstructor()
+    if (microphoneAudioContext.state === 'suspended') {
+      void microphoneAudioContext.resume().catch(_=>0)
+    }
+    microphoneSource = microphoneAudioContext.createMediaStreamSource(stream)
+    microphoneAnalyser = microphoneAudioContext.createAnalyser()
+    microphoneAnalyser.fftSize = 512
+    microphoneAnalyser.smoothingTimeConstant = 0.7
+    microphoneSource.connect(microphoneAnalyser)
+    updateHelloPromptOpacity()
+  } catch {
+    stopMicrophoneVolumeMeter()
+  }
+}
+
+function updateHelloPromptOpacity(): void {
+  if (!microphoneAnalyser) return
+
+  const samples = new Uint8Array(microphoneAnalyser.frequencyBinCount)
+  microphoneAnalyser.getByteFrequencyData(samples)
+
+  let sum = 0
+  for (const sample of samples) {
+    sum += sample
+  }
+
+  const average = sum / samples.length
+  const rawLevel = Math.max(0, (average - 8) / 34)
+  const level = Math.min(1, rawLevel)
+  const smoothing = level > microphoneDisplayedLevel ? 0.35 : 0.04
+  microphoneDisplayedLevel += (level - microphoneDisplayedLevel) * smoothing
+  const opacity = `${0.4 + microphoneDisplayedLevel * 0.6}`
+  helloPrompt.style.opacity = opacity
+  if (currentState === 'calibrating') sceneHudIndicator.style.opacity = opacity
+  microphoneVolumeFrame = window.requestAnimationFrame(updateHelloPromptOpacity)
+}
+
+function stopMicrophoneVolumeMeter(): void {
+  if (microphoneVolumeFrame !== undefined) {
+    window.cancelAnimationFrame(microphoneVolumeFrame)
+    microphoneVolumeFrame = undefined
+  }
+
+  microphoneSource?.disconnect()
+  microphoneSource = null
+  microphoneAnalyser = null
+  microphoneDisplayedLevel = 0
+
+  if (microphoneAudioContext && microphoneAudioContext.state !== 'closed') {
+    void microphoneAudioContext.close().catch(_=>0)
+  }
+  microphoneAudioContext = null
+  helloPrompt.style.opacity = '0.4'
+  sceneHudIndicator.style.opacity = ''
+}
+
+async function playRecordingStartCue(): Promise<void> {
+  await playRecordingCue([1172, 1172])
+}
+
+async function playRecordingStopCue(): Promise<void> {
+  await playRecordingCue([879, 1172])
+}
+
+async function playRecordingCue(frequencies: readonly [number, number]): Promise<void> {
+  const AudioContextConstructor = getAudioContextConstructor()
+  if (!AudioContextConstructor) return
+
+  let audioContext: AudioContext | null = null
+  try {
+    audioContext = new AudioContextConstructor()
+    if (audioContext.state === 'suspended') await audioContext.resume()
+
+    const start = audioContext.currentTime + 0.01
+    const notes = [
+      { frequency: frequencies[0], offset: 0, duration: 0.2, peakGain: 0.065 },
+      { frequency: frequencies[1], offset: 0.1, duration: 0.24, peakGain: 0.055 },
+    ]
+
+    for (const note of notes) {
+      const noteStart = start + note.offset
+      const noteEnd = noteStart + note.duration
+      const oscillator = audioContext.createOscillator()
+      const gain = audioContext.createGain()
+
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(note.frequency, noteStart)
+      gain.gain.setValueAtTime(0.001, noteStart)
+      gain.gain.linearRampToValueAtTime(note.peakGain, noteStart + 0.018)
+      gain.gain.exponentialRampToValueAtTime(0.001, noteEnd)
+      oscillator.connect(gain)
+      gain.connect(audioContext.destination)
+      oscillator.start(noteStart)
+      oscillator.stop(noteEnd + 0.01)
+    }
+
+    await delay(370)
+  } catch {
+    // Cue is optional.
+  } finally {
+    if (audioContext && audioContext.state !== 'closed') {
+      await audioContext.close().catch(_=>0)
+    }
+  }
+}
+
+function getAudioContextConstructor(): typeof AudioContext | null {
+  const browserWindow = window as BrowserWindowWithAudioContext
+  return browserWindow.AudioContext ?? browserWindow.webkitAudioContext ?? null
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds)
+  })
 }
 
 function resetAudio(): void {
@@ -955,15 +1101,27 @@ function resetAudio(): void {
 
 function resetRecordingDisplay(): void {
   recordedDuration = 0
+  shortAnalysisWarningShown = false
   timerElement.textContent = '00:00'
   recordingGuidance.textContent = getRecordingGuidance(0)
+  stopButtonLabel.textContent = 'Stop recording'
+  analyzeButtonLabel.textContent = 'Run analysis'
+  shortAnalysisWarning.classList.add('hidden')
 }
 
 async function analyzeRecording(): Promise<void> {
   if (!recordedAudioBlob || analysisInProgress) return
+  if (isShortRecordingForAnalysis() && !shortAnalysisWarningShown) {
+    shortAnalysisWarningShown = true
+    shortAnalysisWarning.classList.remove('hidden')
+    analyzeButtonLabel.textContent = 'Run analysis anyway'
+    analysisAvailabilityNote.textContent = '30-60 seconds gives the model more speech to compare.'
+    return
+  }
 
   resetResearchSharing()
   analysisInProgress = true
+  updateAnalyzeButtonState()
   currentResult = null
   showAnalysisPanel('loading')
   setAnalysisProgress(0, true)
@@ -979,6 +1137,23 @@ async function analyzeRecording(): Promise<void> {
   } catch (error) {
     showAnalysisError(getAnalysisErrorMessage(error))
   }
+}
+
+function isShortRecordingForAnalysis(): boolean {
+  return recordedDuration < minimumAnalysisDurationMs
+}
+
+function updateAnalysisAvailability(): void {
+  shortAnalysisWarningShown = false
+  shortAnalysisWarning.classList.add('hidden')
+  analyzeButtonLabel.textContent = 'Run analysis'
+  analysisConsent.disabled = false
+  analysisAvailabilityNote.textContent = '30-60 seconds is best.'
+  updateAnalyzeButtonState()
+}
+
+function updateAnalyzeButtonState(): void {
+  analyzeButton.disabled = !analysisConsent.checked || !recordedAudioBlob || analysisInProgress
 }
 
 function getModelWorker(): Worker {
@@ -1035,7 +1210,7 @@ function setAnalysisProgress(value: number, force = false): void {
   analysisProgressValue = force ? nextValue : Math.max(analysisProgressValue, nextValue)
   const roundedValue = Math.round(analysisProgressValue)
   analysisProgress.style.width = `${roundedValue}%`
-  analysisProgressbar.setAttribute('aria-valuenow', String(roundedValue))
+  analysisProgressbar.setAttribute('aria-valuenow', `${roundedValue}`)
   analysisProgressLabel.textContent = `${roundedValue}%`
 }
 
@@ -1060,7 +1235,9 @@ function stopAnalysisProgress(): void {
 }
 
 async function decodeRecording(blob: Blob): Promise<Float32Array> {
-  const audioContext = new AudioContext()
+  const AudioContextConstructor = getAudioContextConstructor()
+  if (!AudioContextConstructor) throw new Error('audio-context-unavailable')
+  const audioContext = new AudioContextConstructor()
 
   try {
     const audioBuffer = await audioContext.decodeAudioData(await blob.arrayBuffer())
@@ -1074,7 +1251,6 @@ async function decodeRecording(blob: Blob): Promise<Float32Array> {
     }
 
     const resampled = resampleAudio(mono, audioBuffer.sampleRate, 16_000)
-    if (resampled.length < 5 * 16_000) throw new Error('short-recording')
     return resampled.length > 90 * 16_000 ? resampled.slice(0, 90 * 16_000) : resampled
   } finally {
     await audioContext.close()
@@ -1181,9 +1357,7 @@ function showAnalysisError(message: string): void {
 }
 
 function getAnalysisErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message === 'short-recording') {
-    return 'Record at least five seconds of speech before running the model.'
-  }
+  void error
   return 'This audio format could not be processed. Record again or try another current browser.'
 }
 
@@ -1199,7 +1373,12 @@ function resetAnalysis(): void {
   currentResult = null
   stopAnalysisProgress()
   analysisConsent.checked = false
+  analysisConsent.disabled = false
   analyzeButton.disabled = true
+  analyzeButtonLabel.textContent = 'Run analysis'
+  analysisAvailabilityNote.textContent = '30-60 seconds is best.'
+  shortAnalysisWarningShown = false
+  shortAnalysisWarning.classList.add('hidden')
   setAnalysisProgress(0, true)
   adBar.style.width = '0%'
   controlBar.style.width = '0%'
@@ -1296,7 +1475,7 @@ function getOptionalResearchSurveyAnswers(): Pick<Partial<ResearchSubmissionDocu
 
 async function shareApp(): Promise<void> {
   await shareContent({
-    title: "Alzheimer's screening helper for families",
+    title: "Alzheimer Self Check: Alzheimer's screening helper",
     text: 'A private picture-description exercise with optional experimental speech risk-class comparison. Not diagnostic.',
     url: publicAssetUrl(),
   })
@@ -1365,7 +1544,7 @@ function getRecordingGuidance(seconds: number): string {
 
 function formatDuration(milliseconds: number): string {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000))
-  return `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`
+  return `${`${Math.floor(totalSeconds / 60)}`.padStart(2, '0')}:${`${totalSeconds % 60}`.padStart(2, '0')}`
 }
 
 function formatDownloadTimestamp(): string {
