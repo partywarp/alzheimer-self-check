@@ -81,21 +81,21 @@ const scenes: PictureScene[] = [
 const sceneIds = scenes.map(({ id }) => id)
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <a class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#203836] focus:outline-2 focus:outline-offset-2 focus:outline-[#315f5a]" href="#main-content">
+  <a class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-heading focus:outline-2 focus:outline-offset-2 focus:outline-brand" href="#main-content">
     Skip to main content
   </a>
 
-  <main id="main-content" tabindex="-1" class="min-h-screen bg-[#fbfaf7] font-sans text-[#202827] antialiased focus:outline-none">
-    <nav class="border-b border-[#e2e0d8] bg-[#fbfaf7]/95">
+  <main id="main-content" tabindex="-1" class="min-h-screen bg-page font-sans text-ink antialiased focus:outline-none">
+    <nav class="border-b border-line-nav bg-page/95">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <a href="${publicAssetUrl()}" class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#315f5a]">
-          <span class="block text-base font-semibold text-[#253f3d]"><span class="sm:hidden">Alzheimer's helper</span><span class="hidden sm:inline">Alzheimer's screening helper</span></span>
-          <span class="block text-sm text-[#697572]">alzheimer self check</span>
+        <a href="${publicAssetUrl()}" class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
+          <span class="block text-base font-semibold text-ink-brand"><span class="sm:hidden">Alzheimer's helper</span><span class="hidden sm:inline">Alzheimer's screening helper</span></span>
+          <span class="block text-sm text-muted-soft">alzheimer self check</span>
         </a>
         <div class="flex items-center gap-1">
-          <a href="${publicAssetUrl('science.html')}" class="rounded-md px-2 py-2 text-base font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a] sm:px-3">Science</a>
-          <a href="${publicAssetUrl('about.html')}" class="rounded-md px-2 py-2 text-base font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a] sm:px-3">About</a>
-          <button id="share-app-nav" type="button" class="hidden rounded-md px-2 py-2 text-base font-medium text-[#315c58] underline decoration-[#a8b9b4] underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#315f5a] sm:inline-flex sm:px-3">Share</button>
+          <a href="${publicAssetUrl('science.html')}" class="rounded-md px-2 py-2 text-base font-medium text-brand-muted underline decoration-brand-decoration underline-offset-4 focus-visible:outline-2 focus-visible:outline-brand sm:px-3">Science</a>
+          <a href="${publicAssetUrl('about.html')}" class="rounded-md px-2 py-2 text-base font-medium text-brand-muted underline decoration-brand-decoration underline-offset-4 focus-visible:outline-2 focus-visible:outline-brand sm:px-3">About</a>
+          <button id="share-app-nav" type="button" class="hidden rounded-md px-2 py-2 text-base font-medium text-brand-muted underline decoration-brand-decoration underline-offset-4 focus-visible:outline-2 focus-visible:outline-brand sm:inline-flex sm:px-3">Share</button>
         </div>
       </div>
     </nav>
@@ -103,27 +103,27 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <header class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-6">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.14em] text-[#56706c]">Private browser exercise</p>
-          <h1 class="mt-1 max-w-2xl text-3xl leading-tight font-semibold tracking-[-0.02em] text-[#203836] sm:text-4xl">
+          <p class="text-sm font-semibold uppercase tracking-[0.14em] text-muted-label">Private browser exercise</p>
+          <h1 class="mt-1 max-w-2xl text-3xl leading-tight font-semibold tracking-[-0.02em] text-ink-heading sm:text-4xl">
             Describe a picture. Review the recording. Optional model comparison.
           </h1>
         </div>
-        <p class="rounded-md border border-[#dedbd0] bg-white px-3 py-2 text-base leading-6 text-[#665f52] sm:max-w-xs">
+        <p class="rounded-md border border-line-warm bg-white px-3 py-2 text-base leading-6 text-muted-copy-10 sm:max-w-xs">
           Not diagnostic. Audio is never uploaded.
         </p>
       </header>
 
-      <section class="mt-4 hidden rounded-md border border-[#dedbd0] bg-white px-3 py-3 sm:mt-6 sm:block sm:px-4" aria-label="Exercise essentials">
-        <div class="grid gap-2 text-base leading-6 text-[#596663] sm:grid-cols-4">
-          <p><span class="font-semibold text-[#293f3d]">Purpose:</span> family conversation aid.</p>
-          <p><span class="font-semibold text-[#293f3d]">Recording:</span> stays local.</p>
-          <p><span class="font-semibold text-[#293f3d]">Model:</span> optional research comparison.</p>
-          <p><span class="font-semibold text-[#293f3d]">Care:</span> talk with a clinician.</p>
+      <section class="mt-4 hidden rounded-md border border-line-warm bg-white px-3 py-3 sm:mt-6 sm:block sm:px-4" aria-label="Exercise essentials">
+        <div class="grid gap-2 text-base leading-6 text-muted-strong sm:grid-cols-4">
+          <p><span class="font-semibold text-ink-deep">Purpose:</span> family conversation aid.</p>
+          <p><span class="font-semibold text-ink-deep">Recording:</span> stays local.</p>
+          <p><span class="font-semibold text-ink-deep">Model:</span> optional research comparison.</p>
+          <p><span class="font-semibold text-ink-deep">Care:</span> talk with a clinician.</p>
         </div>
       </section>
 
       <div class="mt-4 sm:mt-6" aria-label="Exercise progress">
-        <div class="grid grid-cols-3 gap-1 rounded-md border border-[#d8ddd7] bg-[#efeee8] p-1">
+        <div class="grid grid-cols-3 gap-1 rounded-md border border-line-tabs bg-tab-bg p-1">
           <div class="step-card flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center transition-all duration-500 motion-reduce:transition-none sm:gap-2 sm:px-4" data-step="1">
             <span class="step-badge grid size-7 shrink-0 place-items-center rounded-full text-sm font-bold transition-all duration-500 motion-reduce:transition-none">1</span>
             <span class="text-base font-semibold"><span class="sm:hidden">Study</span><span class="hidden sm:inline">Study picture</span></span>
@@ -141,223 +141,276 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
       <section id="workspace" class="mt-4 grid items-start gap-3 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)] lg:gap-6">
         <div id="scene-panel" class="min-w-0 max-h-225 translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none">
-          <div class="overflow-hidden rounded-md border border-[#d8d5ca] bg-white shadow-sm">
-            <div id="scene-label-row" class="border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3">
+          <div id="scene-card" class="overflow-hidden rounded-md border border-line-card bg-white shadow-sm">
+            <div id="scene-label-row" class="border-b border-line px-3 py-2.5 sm:px-4 sm:py-3">
               <div class="flex min-w-0 flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-4">
-                <h2 id="scene-title" class="truncate text-lg font-semibold text-[#293f3d]">Busy kitchen</h2>
-                <p id="scene-hud" class="hidden items-center gap-2 text-base font-semibold text-[#315f5a] md:inline-flex" aria-live="polite">
-                  <span id="scene-hud-indicator"></span><span id="scene-hud-duration" class="hidden rounded-full bg-[#edf5f2] px-2 py-0.5 font-mono text-[#183738]"></span><span id="scene-hud-detail" class="text-[#5d6c69]"></span>
+                <h2 id="scene-title" class="truncate text-lg font-semibold text-ink-deep">Busy kitchen</h2>
+                <p id="scene-hud" class="hidden items-center gap-2 text-base font-semibold text-brand md:inline-flex" aria-live="polite">
+                  <span id="scene-hud-indicator"></span><span id="scene-hud-duration" class="hidden rounded-full bg-brand-soft px-2 py-0.5 font-mono text-ink-strong"></span><span id="scene-hud-detail" class="text-muted-copy-8"></span>
                 </p>
               </div>
             </div>
-            <div class="w-full bg-[#f8f7f2]">
+            <div id="scene-image-wrap" class="w-full bg-picture">
               <img id="scene-image" src="" alt="" width="1536" height="1024" class="h-[32vh] min-h-44 max-h-72 w-full object-contain sm:h-auto sm:max-h-none sm:aspect-3/2" />
             </div>
-            <p class="hidden border-t border-[#e3e0d7] px-3 py-2 text-base leading-6 text-[#536563] sm:block sm:px-4">
+            <p id="scene-instruction" class="hidden border-t border-line px-3 py-2 text-base leading-6 text-muted-copy sm:block sm:px-4">
               Study this scene, then describe everything happening. New attempt, new picture.
             </p>
           </div>
         </div>
 
-        <aside id="exercise-panel" class="min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none">
-          <div id="exercise-heading" class="border-b border-[#e0e5e1] px-4 py-3 sm:px-6 sm:py-5">
-            <div class="mb-1 flex items-center gap-2 text-base font-medium text-[#4c766f]">
-              <span class="size-1.5 rounded-full bg-[#4e8e82]"></span>
+        <aside id="exercise-panel" class="min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-md border border-line-strong bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none">
+          <div id="exercise-heading" class="border-b border-line-soft px-4 py-3 sm:px-6 sm:py-5">
+            <div class="mb-1 flex items-center gap-2 text-base font-medium text-brand-step">
+              <span class="size-1.5 rounded-full bg-brand-dot"></span>
               <span id="panel-step">Step 1 of 3</span>
             </div>
-            <h2 id="panel-title" class="text-2xl font-semibold text-[#183738]">Study the picture</h2>
-            <p id="panel-description" class="mt-1 text-base leading-6 text-[#687775]">Notice the whole scene before recording.</p>
+            <h2 id="panel-title" class="text-2xl font-semibold text-ink-strong">Study the picture</h2>
+            <p id="panel-description" class="mt-1 text-base leading-6 text-muted-softer">Notice the whole scene before recording.</p>
           </div>
 
           <div id="exercise-body" class="px-4 py-4 sm:px-6 sm:py-6">
             <div id="idle-panel" class="flex flex-col items-center text-center">
-              <button id="start-calibration" type="button" class="group grid size-16 place-items-center rounded-full border border-[#9dbab3] bg-[#eef5f2] text-[#1f645e] transition hover:bg-[#e1eeea] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#2b746d] active:scale-95 sm:size-20" aria-label="Continue to microphone setup">
-                <span class="grid size-10 place-items-center rounded-full bg-[#315f5a] text-white transition group-hover:bg-[#264f4b] sm:size-12">
+              <button id="start-calibration" type="button" class="group grid size-16 place-items-center rounded-full border border-brand-border-strong bg-brand-softer text-brand-action-text transition hover:bg-brand-hover-soft focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-brand-action-ring active:scale-95 sm:size-20" aria-label="Continue to microphone setup">
+                <span class="grid size-10 place-items-center rounded-full bg-brand text-white transition group-hover:bg-brand-strong sm:size-12">
                   <svg class="size-5 sm:size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/>
                     <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </span>
               </button>
-              <p class="mt-4 text-base font-bold text-[#244443] sm:mt-5 sm:text-lg">Ready to describe it?</p>
-              <p class="mt-1 max-w-xs text-base leading-6 text-[#6b7977]">Quick microphone warm-up first.</p>
+              <p class="mt-4 text-base font-bold text-ink-forest sm:mt-5 sm:text-lg">Ready to describe it?</p>
+              <p class="mt-1 max-w-xs text-base leading-6 text-muted">Quick microphone warm-up first.</p>
             </div>
 
             <div id="requesting-panel" class="hidden flex-col items-center py-4 text-center sm:py-6 md:absolute md:inset-0 md:pointer-events-none md:justify-start md:py-0">
-              <div class="hidden size-16 animate-pulse place-items-center rounded-full bg-[#e4efeb] text-[#286a63] sm:size-20">
+              <div class="hidden size-16 animate-pulse place-items-center rounded-full bg-brand-icon-bg text-brand-icon sm:size-20">
                 <svg class="size-7 sm:size-8" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </div>
-              <p class="text-base font-bold text-[#244443] sm:text-lg">Allow microphone access</p>
-              <p class="mt-1 max-w-xs text-base leading-6 text-[#6b7977]">Use the browser permission prompt.</p>
-              <div id="permission-help" class="mt-4 hidden max-w-xs border-y border-[#d8e1dc] py-3 text-base leading-6 text-[#667572] md:pointer-events-auto md:border md:bg-white/95 md:px-3 md:shadow-sm">
-                <p class="font-semibold text-[#405a56]">Still waiting for the browser.</p>
+              <p class="text-base font-bold text-ink-forest sm:text-lg md:hidden">Allow microphone access</p>
+              <p class="mt-1 max-w-xs text-base leading-6 text-muted md:hidden">Use the browser permission prompt.</p>
+              <div id="permission-help" class="mt-4 hidden max-w-xs border-y border-line-help py-3 text-base leading-6 text-muted-copy-3 md:pointer-events-auto md:border md:bg-white/95 md:px-3 md:shadow-sm">
+                <p class="font-semibold text-ink-note">Still waiting for the browser.</p>
                 <p class="mt-1">Check the address bar microphone icon or site settings, then try again.</p>
               </div>
-              <button id="cancel-permission" type="button" class="mt-4 rounded-md px-4 py-2 text-base font-bold text-[#657572] hover:bg-[#f0f4f1] md:pointer-events-auto md:bg-white/95">Cancel and try again</button>
+              <button id="cancel-permission" type="button" class="mt-4 rounded-md px-4 py-2 text-base font-bold text-muted-copy-4 hover:bg-brand-pale-hover md:pointer-events-auto md:bg-white/95">Cancel and try again</button>
             </div>
 
             <div id="calibrating-panel" class="hidden flex-col items-center text-center md:absolute md:inset-0 md:pointer-events-none">
-              <span class="hidden size-14 place-items-center rounded-full bg-[#e4efeb] text-[#286a63] sm:size-16">
+              <span class="hidden size-14 place-items-center rounded-full bg-brand-icon-bg text-brand-icon sm:size-16">
                 <svg class="size-6 sm:size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </span>
-              <p class="text-base font-medium text-[#4c766f] md:hidden">Quick warm-up</p>
-              <p id="hello-prompt" class="mt-1 text-2xl font-semibold text-[#183738] opacity-40 transition-opacity duration-100 sm:text-3xl md:hidden">Say "Hello."</p>
-              <div class="hidden h-8 items-center gap-1.5 text-[#4d8c82] sm:h-9" aria-hidden="true">
-                <span class="h-3 w-1.5 animate-pulse rounded-full bg-current"></span>
-                <span class="h-7 w-1.5 animate-pulse rounded-full bg-current"></span>
-                <span class="h-5 w-1.5 animate-pulse rounded-full bg-current"></span>
-                <span class="h-8 w-1.5 animate-pulse rounded-full bg-current sm:h-9"></span>
-                <span class="h-6 w-1.5 animate-pulse rounded-full bg-current"></span>
-                <span class="h-4 w-1.5 animate-pulse rounded-full bg-current"></span>
-                <span class="h-8 w-1.5 animate-pulse rounded-full bg-current"></span>
-                <span class="h-3 w-1.5 animate-pulse rounded-full bg-current"></span>
+              <p class="text-base font-medium text-brand-step md:hidden">Quick warm-up</p>
+              <p id="hello-prompt" class="mt-1 text-2xl font-semibold text-voice-fail opacity-85 transition-[color,opacity] duration-150 sm:text-3xl md:hidden">Say "Hello."</p>
+              <div id="voice-check-card" class="mt-3 w-full max-w-xs rounded-md border border-voice-fail bg-voice-fail-soft px-3 py-3 md:hidden">
+                <div class="flex min-h-12 items-center justify-center gap-1.5" data-volume-meter role="meter" aria-label="Microphone volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                </div>
+                <p id="voice-check-status" class="mt-2 min-h-6 text-base font-semibold text-voice-fail" aria-live="polite">Say "Hello" so we know the mic can hear you.</p>
               </div>
-              <p class="mt-2 max-w-xs text-base leading-6 text-[#6b7977] md:hidden">Warm-up is not recorded.</p>
-              <button id="begin-recording" type="button" aria-label="Start description" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#216869] px-5 py-3.5 text-base font-bold text-white hover:bg-[#195d58] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#216869] sm:mt-6 md:pointer-events-auto md:absolute md:bottom-8 md:left-1/2 md:mt-0 md:flex md:h-16 md:min-h-16 md:w-16 md:min-w-16 md:-translate-x-1/2 md:items-center md:justify-center md:rounded-full md:p-0 md:shadow-lg lg:h-20 lg:min-h-20 lg:w-20 lg:min-w-20">
+              <div id="desktop-voice-check" class="hidden md:absolute md:bottom-8 md:left-1/2 md:z-0 md:flex md:min-h-16 md:-translate-x-1/2 md:items-center md:justify-center md:gap-1.5 lg:bottom-10" data-volume-meter data-volume-meter-size="desktop" role="meter" aria-label="Microphone volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                  <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-fail-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+              </div>
+              <p class="mt-2 max-w-xs text-base leading-6 text-muted md:hidden">Warm-up is not recorded.</p>
+              <button id="begin-recording" type="button" aria-label="Start description" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-action px-5 py-3.5 text-base font-bold text-white hover:bg-brand-action-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-action sm:mt-6 md:pointer-events-auto md:absolute md:bottom-8 md:left-1/2 md:z-10 md:mt-0 md:flex md:h-16 md:min-h-16 md:w-16 md:min-w-16 md:-translate-x-1/2 md:items-center md:justify-center md:rounded-full md:p-0 md:shadow-lg lg:bottom-10 lg:h-20 lg:min-h-20 lg:w-20 lg:min-w-20">
                 <svg class="hidden size-7 md:block lg:size-8" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 <span class="md:sr-only">Start description</span>
               </button>
-              <button id="cancel-calibration" type="button" class="mt-2 rounded-md px-4 py-2 text-base font-bold text-[#657572] hover:bg-[#f0f4f1] md:hidden">Cancel</button>
+              <button id="cancel-calibration" type="button" class="mt-2 rounded-md px-4 py-2 text-base font-bold text-muted-copy-4 hover:bg-brand-pale-hover md:hidden">Cancel</button>
             </div>
 
             <div id="recording-panel" class="hidden flex-col items-center text-center md:absolute md:inset-0 md:pointer-events-none">
-              <div class="flex items-center gap-2 text-base font-semibold text-[#a53b2f] md:hidden">
-                <span class="size-2 animate-pulse rounded-full bg-[#c6493b]"></span>Recording
+              <div class="flex items-center gap-2 text-base font-semibold text-danger-text md:hidden">
+                <span class="size-2 animate-pulse rounded-full bg-danger-dot"></span>Recording
               </div>
-              <div id="recording-timer" class="mt-3 font-mono text-4xl font-semibold tracking-[-0.04em] text-[#183738] sm:mt-5 sm:text-5xl md:hidden" aria-label="Recording duration">00:00</div>
-              <div class="mt-2 flex items-center gap-2 rounded-full bg-[#edf5f2] px-3 py-1.5 text-base font-bold text-[#3f716a] sm:mt-3 md:hidden">
+              <div id="recording-timer" class="mt-3 font-mono text-4xl font-semibold tracking-[-0.04em] text-ink-strong sm:mt-5 sm:text-5xl md:hidden" aria-label="Recording duration">00:00</div>
+              <div class="mt-2 flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1.5 text-base font-bold text-brand-chip sm:mt-3 md:hidden">
                 <svg class="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                 Recommended: 30-60 sec
               </div>
-              <p class="mt-4 text-base font-bold text-[#284746] sm:mt-5 md:hidden">Describe everything happening.</p>
-              <p id="recording-guidance" class="mt-1 text-base leading-6 text-[#6b7977] md:hidden" aria-live="polite">Start with the main action, then add details.</p>
-              <button id="stop-recording" type="button" aria-label="Stop recording" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#a43e33] px-5 py-3.5 text-base font-bold text-white hover:bg-[#8f332a] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#a43e33] disabled:cursor-wait disabled:opacity-60 sm:mt-7 md:pointer-events-auto md:absolute md:bottom-8 md:left-1/2 md:mt-0 md:flex md:h-16 md:min-h-16 md:w-16 md:min-w-16 md:-translate-x-1/2 md:items-center md:justify-center md:rounded-full md:p-0 md:shadow-lg lg:h-20 lg:min-h-20 lg:w-20 lg:min-w-20">
+              <div class="mt-4 flex min-h-10 items-center justify-center gap-1.5 md:hidden" data-volume-meter role="meter" aria-label="Microphone volume while recording" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+              </div>
+              <div class="hidden md:absolute md:bottom-8 md:left-1/2 md:z-0 md:flex md:min-h-16 md:-translate-x-1/2 md:items-center md:justify-center md:gap-1.5 lg:bottom-10 lg:min-h-20" data-volume-meter data-volume-meter-size="desktop" role="meter" aria-label="Microphone volume while recording" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+                <span data-volume-bar class="h-3 w-2 origin-bottom rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>
+              </div>
+              <p class="mt-4 text-base font-bold text-ink-soft sm:mt-5 md:hidden">Describe everything happening.</p>
+              <p id="recording-guidance" class="mt-1 text-base leading-6 text-muted md:hidden" aria-live="polite">Start with the main action, then add details.</p>
+              <button id="stop-recording" type="button" aria-label="Stop recording" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-danger px-5 py-3.5 text-base font-bold text-white hover:bg-danger-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-danger disabled:cursor-wait disabled:opacity-60 sm:mt-7 md:pointer-events-auto md:absolute md:bottom-8 md:left-1/2 md:z-10 md:mt-0 md:flex md:h-16 md:min-h-16 md:w-16 md:min-w-16 md:-translate-x-1/2 md:items-center md:justify-center md:rounded-full md:p-0 md:shadow-lg lg:bottom-10 lg:h-20 lg:min-h-20 lg:w-20 lg:min-w-20">
                 <span class="size-3 rounded-sm bg-white lg:size-4" aria-hidden="true"></span><span id="stop-recording-label" class="md:sr-only">Stop recording</span>
               </button>
             </div>
 
             <div id="completed-panel" class="hidden flex-col gap-4">
-              <section class="rounded-md bg-[#f8faf7] p-4">
+              <section class="rounded-md bg-surface-soft p-4">
                 <div class="flex items-start justify-between gap-3">
                   <div>
-                    <p class="text-lg font-bold text-[#244443]">Review your recording</p>
-                    <p class="mt-1 text-base leading-6 text-[#667572]">Play it back before optional analysis.</p>
+                    <p class="text-lg font-bold text-ink-forest">Review your recording</p>
+                    <p class="mt-1 text-base leading-6 text-muted-copy-3">Play it back before optional analysis.</p>
                   </div>
                   <p id="completed-duration" class="hidden">00:00</p>
                 </div>
                 <audio id="recording-playback" class="mt-4 w-full" controls preload="metadata"></audio>
               </section>
 
-              <section class="rounded-md bg-[#f8faf7] p-4">
+              <section class="rounded-md bg-surface-soft p-4">
                 <div id="analysis-ready">
-                  <p class="text-lg font-bold text-[#244443]">Experimental analysis</p>
-                  <p class="mt-1 text-base leading-6 text-[#667572]">Compares this recording with research speech groups. Not diagnostic.</p>
-                  <label class="mt-3 flex cursor-pointer items-start gap-2.5 rounded-md bg-white/80 p-3 text-base leading-6 text-[#5f6f6c]">
-                    <input id="analysis-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
+                  <p class="text-lg font-bold text-ink-forest">Experimental analysis</p>
+                  <p class="mt-1 text-base leading-6 text-muted-copy-3">Compares this recording with research speech groups. Not diagnostic.</p>
+                  <label class="mt-3 flex cursor-pointer items-start gap-2.5 rounded-md bg-white/80 p-3 text-base leading-6 text-muted-copy-2">
+                    <input id="analysis-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-brand-action">
                     <span>I understand this is not a diagnosis.</span>
                   </label>
-                  <p id="short-analysis-warning" class="mt-3 hidden rounded-md border border-[#e4c474] bg-[#fff8e6] px-3 py-2 text-base leading-6 text-[#6f5524]" role="alert">
+                  <p id="short-analysis-warning" class="mt-3 hidden rounded-md border border-warning-line bg-warning-bg px-3 py-2 text-base leading-6 text-warning-text" role="alert">
                     This recording is under 5 seconds. Short clips give the model less speech to compare, so the result may be less stable. Press Run analysis again to continue anyway.
                   </p>
-                  <button id="analyze-recording" type="button" disabled class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#315f5a] px-4 py-3 text-base font-semibold text-white hover:bg-[#264f4b] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#216869] disabled:cursor-not-allowed disabled:opacity-40">
+                  <button id="analyze-recording" type="button" disabled class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-3 text-base font-semibold text-white hover:bg-brand-strong focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:cursor-not-allowed disabled:opacity-40">
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 13h3l1.5-5 3 10 2.7-13 2.5 11 1.3-5 1 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                     <span id="analyze-recording-label">Run analysis</span>
                   </button>
-                  <p id="analysis-availability-note" class="mt-2 text-center text-base leading-6 text-[#7b8784]">30-60 seconds is best.</p>
+                  <p id="analysis-availability-note" class="mt-2 text-center text-base leading-6 text-muted-info">30-60 seconds is best.</p>
                 </div>
 
                 <div id="analysis-loading" class="hidden py-3 text-center" role="status" aria-live="polite">
-                  <p id="analysis-loading-title" class="text-base font-bold text-[#244443]">Preparing your recording...</p>
-                  <p id="analysis-loading-detail" class="mt-1 text-base text-[#697875]">Audio remains on this device</p>
-                  <div class="mt-4 h-2 overflow-hidden rounded-full bg-[#dce5e1]" role="progressbar" aria-label="Analysis progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="analysis-progressbar">
-                    <div id="analysis-progress" class="h-full rounded-full bg-[#397a72] transition-[width] duration-300 motion-reduce:transition-none" style="width: 0%"></div>
+                  <p id="analysis-loading-title" class="text-base font-bold text-ink-forest">Preparing your recording...</p>
+                  <p id="analysis-loading-detail" class="mt-1 text-base text-muted-soft-2">Audio remains on this device</p>
+                  <div class="mt-4 h-2 overflow-hidden rounded-full bg-line-progress" role="progressbar" aria-label="Analysis progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="analysis-progressbar">
+                    <div id="analysis-progress" class="h-full rounded-full bg-brand-progress transition-[width] duration-300 motion-reduce:transition-none" style="width: 0%"></div>
                   </div>
-                  <p id="analysis-progress-label" class="mt-2 text-base font-bold text-[#61736f]">0%</p>
+                  <p id="analysis-progress-label" class="mt-2 text-base font-bold text-muted-copy-6">0%</p>
                 </div>
 
                 <div id="analysis-result" class="hidden">
-                  <div id="result-graphic" class="mb-3 overflow-hidden rounded-md bg-white/80 p-3 text-[#847447]" aria-hidden="true"></div>
-                  <p class="text-base font-medium text-[#6e795e]">Experimental comparison</p>
-                  <p id="analysis-result-title" class="mt-1 text-lg font-bold text-[#3e493f]">No clear class match</p>
+                  <div id="result-graphic" class="mb-3 overflow-hidden rounded-md bg-white/80 p-3 text-result-mixed-text" aria-hidden="true"></div>
+                  <p class="text-base font-medium text-muted-result">Experimental comparison</p>
+                  <p id="analysis-result-title" class="mt-1 text-lg font-bold text-ink-result">No clear class match</p>
                   <div class="mt-3 space-y-3">
                     <div>
-                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-[#63716e]"><span>Control comparison</span><span id="control-score">0%</span></div>
-                      <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="control-bar" class="h-full rounded-full bg-[#5b8c83] transition-[width] duration-500" style="width: 0%"></div></div>
+                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-muted-copy-7"><span>Control comparison</span><span id="control-score">0%</span></div>
+                      <div class="h-2 overflow-hidden rounded-full bg-line-softer"><div id="control-bar" class="h-full rounded-full bg-brand-progress-muted transition-[width] duration-500" style="width: 0%"></div></div>
                     </div>
                     <div>
-                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-[#63716e]"><span>Alzheimer's research comparison</span><span id="ad-score">0%</span></div>
-                      <div class="h-2 overflow-hidden rounded-full bg-[#e0e5e2]"><div id="ad-bar" class="h-full rounded-full bg-[#a77d58] transition-[width] duration-500" style="width: 0%"></div></div>
+                      <div class="mb-1 flex justify-between gap-3 text-base font-semibold text-muted-copy-7"><span>Alzheimer's research comparison</span><span id="ad-score">0%</span></div>
+                      <div class="h-2 overflow-hidden rounded-full bg-line-softer"><div id="ad-bar" class="h-full rounded-full bg-result-ad transition-[width] duration-500" style="width: 0%"></div></div>
                     </div>
                   </div>
                   <div class="mt-4 rounded-md bg-white/80 p-3">
-                    <p class="text-base font-bold text-[#4f5f5b]">How to read this</p>
-                    <p class="mt-1 text-base leading-6 text-[#697572]">Percentages are research similarity outputs, not chance of disease or diagnosis. No validated typical healthy range is published.</p>
+                    <p class="text-base font-bold text-muted-result-copy">How to read this</p>
+                    <p class="mt-1 text-base leading-6 text-muted-soft">Percentages are research similarity outputs, not chance of disease or diagnosis. No validated typical healthy range is published.</p>
                   </div>
 
                   <div class="mt-4 grid grid-cols-2 gap-2">
-                    <button id="share-result" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-2.5 text-base font-semibold text-[#346c66] hover:bg-[#f3f6f5]">Share result</button>
-                    <button id="share-app-result" type="button" class="rounded-md border border-[#bdd0ca] bg-white px-3 py-2.5 text-base font-semibold text-[#346c66] hover:bg-[#f3f6f5]">Share app</button>
+                    <button id="share-result" type="button" class="rounded-md border border-brand-border bg-white px-3 py-2.5 text-base font-semibold text-brand-link hover:bg-brand-pale">Share result</button>
+                    <button id="share-app-result" type="button" class="rounded-md border border-brand-border bg-white px-3 py-2.5 text-base font-semibold text-brand-link hover:bg-brand-pale">Share app</button>
                   </div>
-                  <p id="share-feedback" class="mt-2 min-h-4 text-center text-base text-[#647571]" aria-live="polite"></p>
+                  <p id="share-feedback" class="mt-2 min-h-4 text-center text-base text-muted-copy-5" aria-live="polite"></p>
 
                   <details id="research-sharing" class="mt-3 rounded-md bg-white/80 px-3 py-3">
-                    <summary class="cursor-pointer text-base font-semibold text-[#405a56]">Help improve this project</summary>
-                    <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-base leading-6 text-[#5f6f6c]">
-                      <input id="research-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-[#216869]">
+                    <summary class="cursor-pointer text-base font-semibold text-ink-note">Help improve this project</summary>
+                    <label class="mt-3 flex cursor-pointer items-start gap-2.5 text-base leading-6 text-muted-copy-2">
+                      <input id="research-consent" type="checkbox" class="mt-0.5 size-4 shrink-0 accent-brand-action">
                       <span>Share my result for research. No audio, transcript, or identifiers are included.</span>
                     </label>
                     <fieldset class="mt-3 grid gap-3 sm:grid-cols-2">
                       <legend class="sr-only">Optional speaker survey</legend>
-                      <label class="grid gap-1 text-base leading-6 text-[#5f6f6c]">
+                      <label class="grid gap-1 text-base leading-6 text-muted-copy-2">
                         <span>Speaker age</span>
-                        <input id="research-age" type="number" inputmode="numeric" min="0" max="120" class="rounded-md border border-[#c8d6d1] bg-white px-3 py-2 text-base text-[#253f3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f5a]" placeholder="Optional">
+                        <input id="research-age" type="number" inputmode="numeric" min="0" max="120" class="rounded-md border border-line-input bg-white px-3 py-2 text-base text-ink-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand" placeholder="Optional">
                       </label>
-                      <label class="grid gap-1 text-base leading-6 text-[#5f6f6c]">
+                      <label class="grid gap-1 text-base leading-6 text-muted-copy-2">
                         <span>Speaker gender</span>
-                        <input id="research-gender" type="text" maxlength="80" class="rounded-md border border-[#c8d6d1] bg-white px-3 py-2 text-base text-[#253f3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f5a]" placeholder="Optional">
+                        <input id="research-gender" type="text" maxlength="80" class="rounded-md border border-line-input bg-white px-3 py-2 text-base text-ink-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand" placeholder="Optional">
                       </label>
                     </fieldset>
-                    <button id="submit-research" type="button" disabled class="mt-3 w-full rounded-md border border-[#8ca9a2] bg-white px-3 py-2.5 text-base font-semibold text-[#315f5a] disabled:cursor-not-allowed disabled:opacity-40">Submit result</button>
-                    <p id="research-status" class="mt-2 text-base leading-6 text-[#647571]" aria-live="polite">Results are sent only if you opt in.</p>
+                    <button id="submit-research" type="button" disabled class="mt-3 w-full rounded-md border border-brand-border-muted bg-white px-3 py-2.5 text-base font-semibold text-brand disabled:cursor-not-allowed disabled:opacity-40">Submit result</button>
+                    <p id="research-status" class="mt-2 text-base leading-6 text-muted-copy-5" aria-live="polite">Results are sent only if you opt in.</p>
                   </details>
 
-                  <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-md py-2 text-base font-semibold text-[#346c66] hover:bg-white/70">Run analysis again</button>
+                  <button id="reanalyze-recording" type="button" class="mt-3 w-full rounded-md py-2 text-base font-semibold text-brand-link hover:bg-white/70">Run analysis again</button>
                 </div>
 
                 <div id="analysis-error" class="hidden py-2 text-center">
-                  <p class="text-base font-bold text-[#774b45]">Analysis unavailable</p>
-                  <p id="analysis-error-message" class="mt-1 text-base leading-6 text-[#796965]">The model could not process this recording.</p>
-                  <button id="retry-analysis" type="button" class="mt-3 rounded-md px-4 py-2 text-base font-bold text-[#346c66] hover:bg-white/70">Try again</button>
+                  <p class="text-base font-bold text-danger-heading">Analysis unavailable</p>
+                  <p id="analysis-error-message" class="mt-1 text-base leading-6 text-danger-copy">The model could not process this recording.</p>
+                  <button id="retry-analysis" type="button" class="mt-3 rounded-md px-4 py-2 text-base font-bold text-brand-link hover:bg-white/70">Try again</button>
                 </div>
               </section>
 
               <div class="grid gap-2 sm:grid-cols-2">
-                <button id="try-another-picture" type="button" class="rounded-md bg-[#315f5a] px-3 py-3 text-base font-semibold text-white hover:bg-[#264f4b]">Try another picture</button>
-                <a id="download-recording" class="inline-flex items-center justify-center gap-2 rounded-md border border-[#bdd0ca] bg-white px-3 py-3 text-base font-semibold text-[#346c66] hover:bg-[#f3f6f5]" href="#">
+                <button id="try-another-picture" type="button" class="rounded-md bg-brand px-3 py-3 text-base font-semibold text-white hover:bg-brand-strong">Try another picture</button>
+                <a id="download-recording" class="inline-flex items-center justify-center gap-2 rounded-md border border-brand-border bg-white px-3 py-3 text-base font-semibold text-brand-link hover:bg-brand-pale" href="#">
                   Download audio
                 </a>
               </div>
-              <button id="delete-recording" type="button" class="self-start rounded-md px-2 py-2 text-base font-semibold text-[#80534d] underline underline-offset-4 hover:bg-[#fbf4f2]">Delete recording</button>
+              <button id="delete-recording" type="button" class="self-start rounded-md px-2 py-2 text-base font-semibold text-danger-muted underline underline-offset-4 hover:bg-danger-soft">Delete recording</button>
             </div>
 
             <div id="error-panel" class="hidden flex-col items-center py-4 text-center">
-              <span class="grid size-14 place-items-center rounded-full bg-[#f6e9e6] text-[#9a5148] sm:size-16">
+              <span class="grid size-14 place-items-center rounded-full bg-danger-icon-bg text-danger-icon sm:size-16">
                 <svg class="size-7" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M10.3 4.4 2.9 17a2 2 0 0 0 1.7 3h14.8a2 2 0 0 0 1.7-3L13.7 4.4a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
               </span>
-              <p class="mt-4 text-lg font-bold text-[#563c39] sm:mt-5">Couldn't start recording</p>
-              <p id="error-message" class="mt-2 max-w-xs text-base leading-6 text-[#766865]">Check microphone permissions and try again.</p>
-              <button id="retry-recording" type="button" class="mt-5 inline-flex w-full items-center justify-center rounded-md bg-[#216869] px-5 py-3.5 text-base font-bold text-white hover:bg-[#195d58] sm:mt-6">Try again</button>
+              <p class="mt-4 text-lg font-bold text-danger-deep sm:mt-5">Couldn't start recording</p>
+              <p id="error-message" class="mt-2 max-w-xs text-base leading-6 text-danger-copy-2">Check microphone permissions and try again.</p>
+              <button id="retry-recording" type="button" class="mt-5 inline-flex w-full items-center justify-center rounded-md bg-brand-action px-5 py-3.5 text-base font-bold text-white hover:bg-brand-action-hover sm:mt-6">Try again</button>
             </div>
 
             <div id="unsupported-panel" class="hidden flex-col items-center py-4 text-center">
-              <p class="text-lg font-bold text-[#46514e]">Recording isn't supported</p>
-              <p class="mt-2 max-w-xs text-base leading-6 text-[#6b7977]">Open this page in a current version of Chrome, Edge, Firefox, or Safari.</p>
+              <p class="text-lg font-bold text-ink-support">Recording isn't supported</p>
+              <p class="mt-2 max-w-xs text-base leading-6 text-muted">Open this page in a current version of Chrome, Edge, Firefox, or Safari.</p>
             </div>
           </div>
 
-          <div id="exercise-footer" class="border-t border-[#e0e5e1] bg-[#f8faf8] px-4 py-3 sm:px-6 sm:py-4">
-            <div id="recorder-status" class="flex items-center gap-2 text-base font-medium text-[#6b7977]" role="status" aria-live="polite">
-              <span class="size-1.5 rounded-full bg-[#87a39d]"></span>
+          <div id="exercise-footer" class="border-t border-line-soft bg-surface-subtle px-4 py-3 sm:px-6 sm:py-4">
+            <div id="recorder-status" class="flex items-center gap-2 text-base font-medium text-muted" role="status" aria-live="polite">
+              <span class="size-1.5 rounded-full bg-brand-status"></span>
               Microphone inactive
             </div>
           </div>
@@ -365,37 +418,37 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </section>
 
       <div id="below-exercise-content">
-        <section class="mt-6 rounded-md border border-[#dedbd0] bg-white px-4 py-4 sm:mt-8 sm:px-5">
-          <h2 class="font-semibold text-[#4c493b]">Not a medical test</h2>
-          <p class="mt-1 max-w-4xl text-base leading-7 text-[#6f6b5e]">This can help families organize observations before seeking professional advice. Neither the exercise nor its optional output can diagnose Alzheimer's disease, dementia, mild cognitive impairment, or any condition. <a class="font-semibold text-[#526f68] underline underline-offset-4" href="${publicAssetUrl('science.html')}">Read the method, evidence, privacy details, and limitations.</a></p>
+        <section class="mt-6 rounded-md border border-line-warm bg-white px-4 py-4 sm:mt-8 sm:px-5">
+          <h2 class="font-semibold text-ink-warm">Not a medical test</h2>
+          <p class="mt-1 max-w-4xl text-base leading-7 text-muted-copy-9">This can help families organize observations before seeking professional advice. Neither the exercise nor its optional output can diagnose Alzheimer's disease, dementia, mild cognitive impairment, or any condition. <a class="font-semibold text-muted-link underline underline-offset-4" href="${publicAssetUrl('science.html')}">Read the method, evidence, privacy details, and limitations.</a></p>
         </section>
 
-        <section class="mt-4 rounded-md border border-[#dedbd0] bg-white px-4 py-4 sm:mt-6 sm:px-5">
-          <h2 class="font-semibold text-[#4c493b]">Common questions</h2>
-          <div class="mt-2 divide-y divide-[#d9ddda] text-base leading-7">
+        <section class="mt-4 rounded-md border border-line-warm bg-white px-4 py-4 sm:mt-6 sm:px-5">
+          <h2 class="font-semibold text-ink-warm">Common questions</h2>
+          <div class="mt-2 divide-y divide-line-muted text-base leading-7">
             <details class="py-3">
-              <summary class="cursor-pointer font-medium text-[#293f3d]">Can this screen for Alzheimer's disease?</summary>
-              <p class="mt-2 text-[#6f6b5e]">It is a screening helper for family reflection, not a clinical Alzheimer's screening test. It cannot diagnose Alzheimer's disease or dementia.</p>
+              <summary class="cursor-pointer font-medium text-ink-deep">Can this screen for Alzheimer's disease?</summary>
+              <p class="mt-2 text-muted-copy-9">It is a screening helper for family reflection, not a clinical Alzheimer's screening test. It cannot diagnose Alzheimer's disease or dementia.</p>
             </details>
             <details class="py-3">
-              <summary class="cursor-pointer font-medium text-[#293f3d]">What does risk-class comparison mean?</summary>
-              <p class="mt-2 text-[#6f6b5e]">The optional model compares speech with two research classes. It is not a medical risk score, disease probability, or clinical classification.</p>
+              <summary class="cursor-pointer font-medium text-ink-deep">What does risk-class comparison mean?</summary>
+              <p class="mt-2 text-muted-copy-9">The optional model compares speech with two research classes. It is not a medical risk score, disease probability, or clinical classification.</p>
             </details>
             <details class="py-3">
-              <summary class="cursor-pointer font-medium text-[#293f3d]">What should families do with concerns?</summary>
-              <p class="mt-2 text-[#6f6b5e]">Use observations as notes for a healthcare professional, especially if memory, language, behavior, or daily function has changed.</p>
+              <summary class="cursor-pointer font-medium text-ink-deep">What should families do with concerns?</summary>
+              <p class="mt-2 text-muted-copy-9">Use observations as notes for a healthcare professional, especially if memory, language, behavior, or daily function has changed.</p>
             </details>
           </div>
         </section>
       </div>
     </div>
 
-    <footer class="border-t border-[#d9ddd6]">
-      <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-base leading-6 text-[#71807d] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+    <footer class="border-t border-line-muted-2">
+      <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-base leading-6 text-muted-footer sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <p>Audio stays on this device. Opted-in research summaries may include optional age and gender survey answers, but never audio or transcript.</p>
         <div class="flex gap-4">
-          <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('science.html')}">Science</a>
-          <a class="font-medium underline underline-offset-4 hover:text-[#315f5a]" href="${publicAssetUrl('about.html')}">About</a>
+          <a class="font-medium underline underline-offset-4 hover:text-brand" href="${publicAssetUrl('science.html')}">Science</a>
+          <a class="font-medium underline underline-offset-4 hover:text-brand" href="${publicAssetUrl('about.html')}">About</a>
         </div>
       </div>
     </footer>
@@ -403,6 +456,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 
 const isRecordingSupported = typeof MediaRecorder !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia)
+const voiceCheckThreshold = 0.24
+const volumeBarWeights = [0.45, 0.6, 0.82, 1, 1.15, 1.15, 1, 0.82, 0.6, 0.45]
+const volumeHistorySize = 52
 const pictureDeck = loadPictureDeck()
 let currentState: RecorderState = isRecordingSupported ? 'idle' : 'unsupported'
 let mediaRecorder: MediaRecorder | null = null
@@ -414,7 +470,6 @@ let recordingStartedAt = 0
 let recordedDuration = 0
 let timerId: number | undefined
 let permissionHelpTimer: number | undefined
-let permissionTimeoutTimer: number | undefined
 let microphoneRequestId = 0
 let recorderFailed = false
 let shortAnalysisWarningShown = false
@@ -423,6 +478,11 @@ let microphoneAnalyser: AnalyserNode | null = null
 let microphoneSource: MediaStreamAudioSourceNode | null = null
 let microphoneVolumeFrame: number | undefined
 let microphoneDisplayedLevel = 0
+let microphoneCurrentLevel = 0
+let microphoneLevelHistory = Array.from<number>({ length: volumeHistorySize }).fill(0)
+let voiceCheckPassed = false
+let voiceCheckWarningVisible = false
+let voiceCheckAvailable = true
 let modelWorker: Worker | null = null
 let analysisInProgress = false
 let analysisProgressValue = 0
@@ -443,6 +503,7 @@ const panels: Record<RecorderState, HTMLElement> = {
 const workspace = getElement('workspace')
 const belowExerciseContent = getElement('below-exercise-content')
 const scenePanel = getElement('scene-panel')
+const sceneCard = getElement('scene-card')
 const exercisePanel = getElement('exercise-panel')
 const exerciseHeading = getElement('exercise-heading')
 const exerciseBody = getElement('exercise-body')
@@ -453,7 +514,9 @@ const sceneHud = getElement('scene-hud')
 const sceneHudIndicator = getElement('scene-hud-indicator')
 const sceneHudDuration = getElement('scene-hud-duration')
 const sceneHudDetail = getElement('scene-hud-detail')
+const sceneImageWrap = getElement('scene-image-wrap')
 const sceneImage = getElement<HTMLImageElement>('scene-image')
+const sceneInstruction = getElement('scene-instruction')
 const panelStep = getElement('panel-step')
 const panelTitle = getElement('panel-title')
 const panelDescription = getElement('panel-description')
@@ -463,6 +526,10 @@ const cancelPermissionButton = getElement<HTMLButtonElement>('cancel-permission'
 const cancelCalibrationButton = getElement<HTMLButtonElement>('cancel-calibration')
 const permissionHelp = getElement('permission-help')
 const helloPrompt = getElement('hello-prompt')
+const voiceCheckCard = getElement('voice-check-card')
+const voiceCheckStatus = getElement('voice-check-status')
+const volumeMeters = [...document.querySelectorAll<HTMLElement>('[data-volume-meter]')]
+syncVolumeMeterBarCounts()
 const stopButton = getElement<HTMLButtonElement>('stop-recording')
 const stopButtonLabel = getElement('stop-recording-label')
 const retryButton = getElement<HTMLButtonElement>('retry-recording')
@@ -540,6 +607,14 @@ function getElement<T extends HTMLElement = HTMLElement>(id: string): T {
   return element as T
 }
 
+function syncVolumeMeterBarCounts(): void {
+  const barMarkup = `<span data-volume-bar class="h-3 w-2 origin-center rounded-full bg-voice-pass-bg opacity-90 transition-[height,background-color,opacity] duration-100"></span>`
+  volumeMeters.forEach((meter) => {
+    const count = meter.dataset.volumeMeterSize === 'desktop' ? 22 : 10
+    meter.innerHTML = Array.from<string>({ length: count }).fill(barMarkup).join('')
+  })
+}
+
 function setState(nextState: RecorderState, errorMessage?: string): void {
   const previousState = currentState
   currentState = nextState
@@ -567,7 +642,7 @@ function setState(nextState: RecorderState, errorMessage?: string): void {
   }
 
   statusElement.innerHTML = `
-    <span class="size-1.5 ${nextState === 'recording' ? 'animate-pulse rounded-full bg-[#c6493b]' : 'rounded-full bg-[#87a39d]'}"></span>
+    <span class="size-1.5 ${nextState === 'recording' ? 'animate-pulse rounded-full bg-danger-dot' : 'rounded-full bg-brand-status'}"></span>
     ${statuses[nextState]}
   `
 
@@ -596,20 +671,20 @@ function renderStepIndicator(activeStep: 1 | 2 | 3): void {
     card.setAttribute('aria-current', isActive ? 'step' : 'false')
     card.className = `step-card flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center transition-all duration-500 motion-reduce:transition-none sm:gap-2 sm:px-4 ${
       isActive
-        ? 'bg-white text-[#284746] shadow-sm'
+        ? 'bg-white text-ink-soft shadow-sm'
         : isComplete
-          ? 'bg-[#dceae5] text-[#315f5a]'
-          : 'text-[#657572]'
+          ? 'bg-brand-track text-brand'
+          : 'text-muted-copy-4'
     }`
 
     if (badge) {
       badge.textContent = isComplete ? '✓' : `${step}`
       badge.className = `step-badge grid size-7 shrink-0 place-items-center rounded-full text-sm font-bold transition-all duration-500 motion-reduce:transition-none ${
         isActive
-          ? 'scale-105 bg-[#315f5a] text-white ring-2 ring-[#dbe9e4]'
+          ? 'scale-105 bg-brand text-white ring-2 ring-brand-ring'
         : isComplete
-            ? 'bg-[#4f8279] text-white'
-            : 'bg-[#dceae5] text-[#285b57]'
+            ? 'bg-brand-fill text-white'
+            : 'bg-brand-track text-brand-muted-dark'
       }`
     }
   })
@@ -630,35 +705,58 @@ function renderPanelHeading(activeStep: 1 | 2 | 3): void {
 function renderLayoutForState(state: RecorderState): void {
   const isReviewing = state === 'completed'
   const isPictureFocus = isPictureFocusState(state)
+  const isRecording = state === 'recording'
+  lockMobilePageScroll(isRecording)
 
   workspace.className = isReviewing
     ? 'mt-4 grid items-start gap-0 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-6 lg:grid-cols-[minmax(0,0fr)_minmax(0,1fr)]'
+    : isRecording
+      ? 'fixed inset-0 z-40 grid grid-rows-[minmax(0,1fr)_auto] gap-3 overflow-hidden bg-black pb-[calc(0.75rem+env(safe-area-inset-bottom))] transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none md:relative md:inset-auto md:z-auto md:mt-2 md:grid-rows-none md:items-start md:gap-3 md:overflow-visible md:bg-transparent md:p-0'
     : isPictureFocus
       ? 'relative mt-2 grid items-start gap-2 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-3 md:gap-3'
       : 'mt-4 grid items-start gap-3 transition-[grid-template-columns,gap] duration-500 motion-reduce:transition-none sm:mt-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)] lg:gap-6'
   scenePanel.className = isReviewing
     ? 'pointer-events-none min-w-0 max-h-0 -translate-y-3 overflow-hidden opacity-0 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
-    : 'min-w-0 max-h-[1200px] translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
+    : isRecording
+      ? 'min-h-0 min-w-0 max-h-none translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none md:max-h-[1200px] md:overflow-visible'
+      : 'min-w-0 max-h-[1200px] translate-y-0 overflow-hidden opacity-100 transition-[max-height,opacity,transform] duration-500 motion-reduce:transition-none'
+  sceneCard.className = isRecording
+    ? 'grid h-full min-h-0 grid-rows-[minmax(0,1fr)] overflow-hidden border-0 bg-black shadow-none md:block md:h-auto md:rounded-md md:border md:border-line-card md:bg-white md:shadow-sm'
+    : 'overflow-hidden rounded-md border border-line-card bg-white shadow-sm'
+  sceneImageWrap.className = isRecording
+    ? 'min-h-0 w-full bg-black'
+    : 'w-full bg-picture'
   sceneImage.className = isPictureFocus
-    ? 'h-auto max-h-none w-full object-contain md:max-h-[calc(100svh-10rem)]'
+    ? isRecording
+      ? 'h-full w-full object-contain object-center md:h-auto md:max-h-[calc(100svh-10rem)]'
+      : 'h-auto max-h-none w-full object-contain md:max-h-[calc(100svh-10rem)]'
     : 'h-auto w-full object-cover'
   sceneLabelRow.className = isPictureFocus
-    ? 'border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3 md:bg-[#f8faf7]'
-    : 'border-b border-[#e3e0d7] px-3 py-2.5 sm:px-4 sm:py-3'
+    ? isRecording
+      ? 'hidden border-b border-line px-3 py-2.5 sm:px-4 sm:py-3 md:block md:bg-surface-soft'
+      : 'border-b border-line px-3 py-2.5 sm:px-4 sm:py-3 md:bg-surface-soft'
+    : 'border-b border-line px-3 py-2.5 sm:px-4 sm:py-3'
   exercisePanel.className = isReviewing
-    ? 'min-w-0 w-full max-w-3xl justify-self-center overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none'
+    ? 'min-w-0 w-full max-w-3xl justify-self-center overflow-hidden rounded-md border border-line-strong bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none'
+    : isRecording
+      ? 'mx-4 min-w-0 overflow-hidden rounded-md border border-line-strong bg-white shadow-sm transition-[width,max-width,transform] duration-500 motion-reduce:transition-none md:absolute md:inset-0 md:z-30 md:mx-0 md:max-w-none md:overflow-visible md:border-0 md:bg-transparent md:shadow-none'
     : isPictureFocus
-      ? 'mx-auto w-full max-w-xl overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width,transform] duration-500 motion-reduce:transition-none sm:max-w-2xl md:absolute md:inset-0 md:z-30 md:mx-0 md:max-w-none md:overflow-visible md:border-0 md:bg-transparent md:shadow-none'
-      : 'min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-md border border-[#cfd8d2] bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none'
+      ? 'mx-auto w-full max-w-xl overflow-hidden rounded-md border border-line-strong bg-white shadow-sm transition-[width,max-width,transform] duration-500 motion-reduce:transition-none sm:max-w-2xl md:absolute md:inset-0 md:z-30 md:mx-0 md:max-w-none md:overflow-visible md:border-0 md:bg-transparent md:shadow-none'
+      : 'min-w-0 w-full max-w-none justify-self-stretch overflow-hidden rounded-md border border-line-strong bg-white shadow-sm transition-[width,max-width] duration-500 motion-reduce:transition-none'
   exerciseHeading.className = isPictureFocus
     ? 'sr-only'
-    : 'border-b border-[#e0e5e1] px-4 py-3 sm:px-6 sm:py-5'
+    : 'border-b border-line-soft px-4 py-3 sm:px-6 sm:py-5'
   exerciseBody.className = isPictureFocus
-    ? 'px-3 py-2 sm:px-4 sm:py-3 md:contents'
+    ? isRecording
+      ? 'px-3 py-3 md:contents'
+      : 'px-3 py-2 sm:px-4 sm:py-3 md:contents'
     : 'px-4 py-4 sm:px-6 sm:py-6'
+  sceneInstruction.className = isRecording
+    ? 'hidden border-t border-line px-3 py-2 text-base leading-6 text-muted-copy md:block md:px-4'
+    : 'hidden border-t border-line px-3 py-2 text-base leading-6 text-muted-copy sm:block sm:px-4'
   exerciseFooter.className = isPictureFocus
     ? 'hidden'
-    : 'border-t border-[#e0e5e1] bg-[#f8faf8] px-4 py-3 sm:px-6 sm:py-4'
+    : 'border-t border-line-soft bg-surface-subtle px-4 py-3 sm:px-6 sm:py-4'
   belowExerciseContent.className = ''
 }
 
@@ -666,8 +764,14 @@ function isPictureFocusState(state: RecorderState): boolean {
   return state === 'requesting' || state === 'calibrating' || state === 'recording'
 }
 
+function lockMobilePageScroll(shouldLock: boolean): void {
+  const isMobileViewport = window.matchMedia('(max-width: 767.98px)').matches
+  document.body.style.overflow = shouldLock && isMobileViewport ? 'hidden' : ''
+}
+
 function renderSceneHud(state: RecorderState): void {
-  sceneHud.classList.toggle('hidden', !isPictureFocusState(state))
+  sceneHud.classList.toggle('hidden', true)
+  sceneHud.classList.toggle('md:inline-flex', isPictureFocusState(state))
   if (state === 'requesting') {
     setSceneHudText('Allow microphone access', '', '')
     return
@@ -764,6 +868,7 @@ async function startCalibration(): Promise<void> {
   if (!isRecordingSupported || ['requesting', 'calibrating', 'recording'].includes(currentState)) return
 
   resetAudio()
+  resetVoiceCheck()
   setState('requesting')
   const requestId = beginMicrophoneRequest()
 
@@ -793,6 +898,11 @@ async function startCalibration(): Promise<void> {
 
 async function beginRecording(): Promise<void> {
   if (!mediaStream || currentState !== 'calibrating') return
+  if (voiceCheckAvailable && !voiceCheckPassed) {
+    voiceCheckWarningVisible = true
+    renderVoiceCheck()
+    return
+  }
 
   beginRecordingButton.disabled = true
   try {
@@ -817,7 +927,6 @@ async function beginRecording(): Promise<void> {
     window.requestAnimationFrame(() => {
       void playRecordingStartCue()
     })
-    stopMicrophoneVolumeMeter()
     mediaRecorder.start(250)
 
     recordingStartedAt = Date.now()
@@ -924,15 +1033,6 @@ function beginMicrophoneRequest(): number {
     }
   }, 4_000)
 
-  permissionTimeoutTimer = window.setTimeout(() => {
-    if (requestId !== microphoneRequestId || currentState !== 'requesting') return
-
-    microphoneRequestId += 1
-    clearMicrophoneRequestTimers()
-    permissionHelp.classList.add('hidden')
-    setState('error', 'The browser did not finish microphone permission. Check the address bar microphone icon or site settings, then try again.')
-  }, 20_000)
-
   return requestId
 }
 
@@ -947,10 +1047,6 @@ function clearMicrophoneRequestTimers(): void {
     window.clearTimeout(permissionHelpTimer)
     permissionHelpTimer = undefined
   }
-  if (permissionTimeoutTimer !== undefined) {
-    window.clearTimeout(permissionTimeoutTimer)
-    permissionTimeoutTimer = undefined
-  }
 }
 
 function releaseMicrophone(): void {
@@ -962,7 +1058,12 @@ function releaseMicrophone(): void {
 function startMicrophoneVolumeMeter(stream: MediaStream): void {
   stopMicrophoneVolumeMeter()
   const AudioContextConstructor = getAudioContextConstructor()
-  if (!AudioContextConstructor) return
+  if (!AudioContextConstructor) {
+    voiceCheckAvailable = false
+    voiceCheckPassed = true
+    renderVoiceCheck()
+    return
+  }
 
   try {
     microphoneAudioContext = new AudioContextConstructor()
@@ -974,32 +1075,40 @@ function startMicrophoneVolumeMeter(stream: MediaStream): void {
     microphoneAnalyser.fftSize = 512
     microphoneAnalyser.smoothingTimeConstant = 0.7
     microphoneSource.connect(microphoneAnalyser)
-    updateHelloPromptOpacity()
+    updateMicrophoneVolumeMeter()
   } catch {
+    voiceCheckAvailable = false
+    voiceCheckPassed = true
+    renderVoiceCheck()
     stopMicrophoneVolumeMeter()
   }
 }
 
-function updateHelloPromptOpacity(): void {
+function updateMicrophoneVolumeMeter(): void {
   if (!microphoneAnalyser) return
 
-  const samples = new Uint8Array(microphoneAnalyser.frequencyBinCount)
-  microphoneAnalyser.getByteFrequencyData(samples)
+  const samples = new Uint8Array(microphoneAnalyser.fftSize)
+  microphoneAnalyser.getByteTimeDomainData(samples)
 
   let sum = 0
   for (const sample of samples) {
-    sum += sample
+    const centered = (sample - 128) / 128
+    sum += centered * centered
   }
 
-  const average = sum / samples.length
-  const rawLevel = Math.max(0, (average - 8) / 34)
+  const rms = Math.sqrt(sum / samples.length)
+  const rawLevel = Math.max(0, (rms - 0.015) / 0.14)
   const level = Math.min(1, rawLevel)
   const smoothing = level > microphoneDisplayedLevel ? 0.35 : 0.04
   microphoneDisplayedLevel += (level - microphoneDisplayedLevel) * smoothing
-  const opacity = `${0.4 + microphoneDisplayedLevel * 0.6}`
-  helloPrompt.style.opacity = opacity
-  if (currentState === 'calibrating') sceneHudIndicator.style.opacity = opacity
-  microphoneVolumeFrame = window.requestAnimationFrame(updateHelloPromptOpacity)
+  microphoneCurrentLevel = Math.max(microphoneCurrentLevel * 0.92, level, microphoneDisplayedLevel)
+  microphoneLevelHistory = [microphoneDisplayedLevel, ...microphoneLevelHistory.slice(0, volumeHistorySize - 1)]
+  if (currentState === 'calibrating' && microphoneCurrentLevel >= voiceCheckThreshold) {
+    voiceCheckPassed = true
+    voiceCheckWarningVisible = false
+  }
+  renderVoiceCheck()
+  microphoneVolumeFrame = window.requestAnimationFrame(updateMicrophoneVolumeMeter)
 }
 
 function stopMicrophoneVolumeMeter(): void {
@@ -1012,13 +1121,86 @@ function stopMicrophoneVolumeMeter(): void {
   microphoneSource = null
   microphoneAnalyser = null
   microphoneDisplayedLevel = 0
+  microphoneCurrentLevel = 0
+  microphoneLevelHistory = Array.from<number>({ length: volumeHistorySize }).fill(0)
 
   if (microphoneAudioContext && microphoneAudioContext.state !== 'closed') {
     void microphoneAudioContext.close().catch(_=>0)
   }
   microphoneAudioContext = null
-  helloPrompt.style.opacity = '0.4'
+  renderVoiceCheck()
   sceneHudIndicator.style.opacity = ''
+}
+
+function resetVoiceCheck(): void {
+  voiceCheckPassed = false
+  voiceCheckWarningVisible = false
+  voiceCheckAvailable = true
+  microphoneDisplayedLevel = 0
+  microphoneCurrentLevel = 0
+  microphoneLevelHistory = Array.from<number>({ length: volumeHistorySize }).fill(0)
+  renderVoiceCheck()
+}
+
+function renderVoiceCheck(): void {
+  const level = Math.max(0, Math.min(1, microphoneDisplayedLevel))
+  const percentage = `${Math.round(level * 100)}`
+  const activeColor = voiceCheckPassed ? 'bg-voice-pass-bg' : 'bg-voice-fail-bg'
+  const idleColor = 'bg-line-strong'
+  const promptOpacity = 0.85 + Math.min(0.15, level * 0.15)
+
+  helloPrompt.style.opacity = `${promptOpacity}`
+  helloPrompt.className = `mt-1 text-2xl font-semibold transition-[color,opacity] duration-150 sm:text-3xl md:hidden ${
+    voiceCheckPassed ? 'text-voice-pass' : 'text-voice-fail'
+  }`
+  voiceCheckCard.className = `mt-3 w-full max-w-xs rounded-md border px-3 py-3 md:hidden ${
+    voiceCheckPassed ? 'border-voice-pass bg-voice-pass-soft' : 'border-voice-fail bg-voice-fail-soft'
+  }`
+
+  if (!voiceCheckAvailable) {
+    voiceCheckStatus.textContent = 'Mic is ready. Volume meter is unavailable in this browser.'
+    voiceCheckStatus.className = 'mt-2 min-h-6 text-base font-semibold text-voice-pass'
+  } else if (voiceCheckPassed) {
+    voiceCheckStatus.textContent = 'Voice heard. Start when ready.'
+    voiceCheckStatus.className = 'mt-2 min-h-6 text-base font-semibold text-voice-pass'
+  } else if (voiceCheckWarningVisible) {
+    voiceCheckStatus.textContent = 'Mic did not hear you yet. Say "Hello" first.'
+    voiceCheckStatus.className = 'mt-2 min-h-6 text-base font-semibold text-voice-fail'
+  } else {
+    voiceCheckStatus.textContent = 'Say "Hello" so we know the mic can hear you.'
+    voiceCheckStatus.className = 'mt-2 min-h-6 text-base font-semibold text-voice-fail'
+  }
+
+  if (currentState === 'calibrating') {
+    sceneHudIndicator.style.opacity = `${promptOpacity}`
+    sceneHudIndicator.className = voiceCheckPassed ? 'text-voice-pass' : 'text-voice-fail'
+    sceneHudDetail.textContent = !voiceCheckAvailable
+      ? 'Mic ready. Volume meter unavailable.'
+      : voiceCheckPassed
+      ? 'Voice heard. Start description when ready.'
+      : 'Say "Hello" first. Warm-up is not recorded.'
+  } else {
+    sceneHudIndicator.className = ''
+  }
+
+  volumeMeters.forEach((meter) => {
+    meter.setAttribute('aria-valuenow', percentage)
+    const isDesktopDock = meter.className.includes('md:absolute')
+    const maxHeight = isDesktopDock ? 5.8 : 2.1
+    const bars = [...meter.querySelectorAll<HTMLElement>('[data-volume-bar]')]
+    bars.forEach((bar, index) => {
+      const reverseIndex = bars.length - 1 - index
+      const delayedLevel = microphoneLevelHistory[reverseIndex * 2] ?? 0
+      const barLevel = Math.max(0, Math.min(1, delayedLevel))
+      const levelScale = isDesktopDock ? 3.15 : 1.85
+      const height = Math.min(maxHeight, 0.55 + volumeBarWeights[index % volumeBarWeights.length] * (0.25 + barLevel * levelScale))
+      const isActive = currentState === 'recording' || voiceCheckPassed || (currentState === 'calibrating' && !voiceCheckPassed) || barLevel > 0.02
+      bar.style.height = `${height}rem`
+      bar.className = `w-1.5 origin-center rounded-full transition-[height] duration-100 ${
+        isActive ? `${activeColor} opacity-100` : `${idleColor} opacity-70`
+      }`
+    })
+  })
 }
 
 async function playRecordingStartCue(): Promise<void> {
@@ -1314,9 +1496,9 @@ function getResultBand(adScore: number): ResultBand {
 
 function getResultGraphicClass(band: ResultBand): string {
   const classes: Record<ResultBand, string> = {
-    'control-like': 'mb-3 overflow-hidden rounded-md border border-[#d8e1dc] bg-[#f5f7f6] p-3 text-[#397a72]',
-    mixed: 'mb-3 overflow-hidden rounded-md border border-[#e2ded2] bg-[#f8f7f3] p-3 text-[#847447]',
-    'ad-like': 'mb-3 overflow-hidden rounded-md border border-[#e5d9d2] bg-[#f8f5f3] p-3 text-[#986b4d]',
+    'control-like': 'mb-3 overflow-hidden rounded-md border border-line-help bg-result-control-bg p-3 text-brand-progress',
+    mixed: 'mb-3 overflow-hidden rounded-md border border-line-warm-2 bg-picture-muted p-3 text-result-mixed-text',
+    'ad-like': 'mb-3 overflow-hidden rounded-md border border-result-ad-border bg-result-ad-bg p-3 text-result-ad-text',
   }
   return classes[band]
 }
